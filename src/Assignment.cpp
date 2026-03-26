@@ -32,7 +32,6 @@ std::map<String, int> pin_map;
 // Port 80 is the default HTTP port used by web browsers
 AsyncWebServer server(80);
 
-
 void toggle_pin(uint8_t pin) {
   digitalWrite(pin, !digitalRead(pin));
 }
@@ -93,7 +92,7 @@ void setup()
       request->send(200, "text/plain", "OK");
     }
 
-    request->send(404, "text/plain", "Not Found"); 
+    request->send(400, "text/plain", "Bad Request"); 
   });
 
   // Start the web server

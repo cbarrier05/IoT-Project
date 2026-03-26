@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <unordered_map>
+#include <map>
 
 
 
@@ -27,10 +27,15 @@ const char* password = "Christian"; // CHANGE THIS TO YOUR WIFI PASSWORD
 #define LED2_PIN 12
 #define LED3_PIN 11
 
-std::unordered_map<String, int> pin_map;
+std::map<String, int> pin_map;
+
 // Create a web server object listening on port 80
 // Port 80 is the default HTTP port used by web browsers
 AsyncWebServer server(80);
+
+void toggle_pin(uint8_t pin) {
+  digitalWrite(pin, !digitalRead(pin));
+}
 
 // ---------------------------------------------------
 // Function: setup()es
@@ -62,8 +67,8 @@ void setup()
   }
 
   // Once connected, print IP address
-  Serial.printf("\nConnected! IP: %s", WiFi.localIP());
-
+  Serial.print("\nConnected! IP:");
+  Serial.println(WiFi.localIP());
 
   // Serve the HTML page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -88,18 +93,12 @@ void setup()
       request->send(200, "text/plain", "OK");
     }
 
-    request->send(404, "text/plain", "Not Found"); 
+    request->send(400, "text/plain", "Bad Request"); 
   });
 
   // Start the web server
   server.begin();
 }
-
-void toggle_pin(uint8_t pin) {
-  digitalWrite(pin, !digitalRead(pin));
-}
-
-
 
 // ---------------------------------------------------
 // Function: loop()

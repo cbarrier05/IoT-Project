@@ -7,6 +7,10 @@
 #include <WebServer.h>
 
 #include <ESPAsyncWebServer.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <unordered_map>
 
 
 
@@ -23,18 +27,13 @@ const char* password = "Christian"; // CHANGE THIS TO YOUR WIFI PASSWORD
 #define LED2_PIN 12
 #define LED3_PIN 11
 
-
-
+std::unordered_map<String, int> pin_map;
 // Create a web server object listening on port 80
 // Port 80 is the default HTTP port used by web browsers
 AsyncWebServer server(80);
 
-
-
-
-
 // ---------------------------------------------------
-// Function: setup()
+// Function: setup()es
 // Runs once when the ESP32 starts
 // ---------------------------------------------------
 void setup()
@@ -46,9 +45,12 @@ void setup()
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);
 
+  pin_map["1"] = LED1_PIN;
+  pin_map["2"] = LED2_PIN;
+  pin_map["3"] = LED3_PIN;
 
   // Start connecting to WiFi
-  WiFi.begin(ssid,password);
+  WiFi.begin(ssid, password);
 
   Serial.print("Connecting to WiFi");
 
@@ -60,49 +62,41 @@ void setup()
   }
 
   // Once connected, print IP address
-  Serial.println("");
-  Serial.print("Connected! IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.printf("\nConnected! IP: %s", WiFi.localIP());
 
 
   // Serve the HTML page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    String html = "<html><body><h1>LED Control</h1>";
-    html += "<button onclick=\"toggleLED(1)\">Toggle LED 1</button><br><br>";
-    html += "<button onclick=\"toggleLED(2)\">Toggle LED 2</button><br><br>";
-    html += "<button onclick=\"toggleLED(3)\">Toggle LED 3</button><br><br>";
-    html += "<script>";
-    html += "function toggleLED(led) {";
-    html += "  var xhr = new XMLHttpRequest();";
-    html += "  xhr.open('GET', '/toggle?led=' + led, true);";
-    html += "  xhr.send();";
-    html += "}";
-    html += "</script>";
-    html += "</body></html>";
-    
-    request->send(200, "text/html", html);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    // serves the contents of index.html
+    String file_path = "index.html";
+    std::ifstream file(file_path.c_str());
+    std::stringstream buffer;
+
+    buffer << file.rdbuf();
+    String file_string = String(buffer.str().c_str());
+
+    request->send(200, "text/html", file_string);
   });
 
   // Handle toggle requests
-  server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request) {
     String ledParam;
     if (request->hasParam("led")) {
       ledParam = request->getParam("led")->value();
+      int pin_number = pin_map[ledParam];
+      toggle_pin(pin_number);
+      request->send(200, "text/plain", "OK");
     }
 
-    if (ledParam == "1") {
-      digitalWrite(LED1_PIN, !digitalRead(LED1_PIN)); // Toggle LED 1
-    } else if (ledParam == "2") {
-      digitalWrite(LED2_PIN, !digitalRead(LED2_PIN)); // Toggle LED 2
-    } else if (ledParam == "3") {
-      digitalWrite(LED3_PIN, !digitalRead(LED3_PIN)); // Toggle LED 3
-    }
-
-    request->send(200, "text/plain", "OK");
+    request->send(404, "text/plain", "Not Found"); 
   });
 
   // Start the web server
   server.begin();
+}
+
+void toggle_pin(uint8_t pin) {
+  digitalWrite(pin, !digitalRead(pin));
 }
 
 

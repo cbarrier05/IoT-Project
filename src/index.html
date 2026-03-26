@@ -1,0 +1,38 @@
+<html>
+<head>
+  <script>
+    function toggleLED(led) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/toggle?led=' + led, true);
+      xhr.send();
+      let elem = document.getElementById("led-" + led);
+      elem.classList.contains(".active") ? elem.classList.remove(".active") : elem.classList.add(".active");
+    }
+  </script>
+
+  <style>
+    .button-container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .button-container > button {
+      background-color: maroon;
+      border-radius: 3px;
+    }
+
+    .active {
+      background-color: green;
+    }
+  </style>
+</head>
+<body>
+<h1>LED Control</h1>
+  <div class="button-container">
+    <button id="led-1" onclick="toggleLED(1)">Toggle LED 1</button>
+    <button id="led-2" onclick="toggleLED(2)">Toggle LED 2</button>
+    <button id="led-3" onclick="toggleLED(3)">Toggle LED 3</button>
+  </div>
+</body> 
+
+</html>

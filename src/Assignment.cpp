@@ -36,8 +36,20 @@ int pattern;
 
 long lastUpdate = 0;
 
+float temperatureC;
+
+const float low_temp = 15;
+const float mid_temp = 19;
+const float high_temp = 21;
+
 void reset_leds() {
   for (auto led : led_pin_map) {
+    digitalWrite(led.second, LOW);
+  }
+}
+
+void reset_temp_leds() {
+  for (auto led : temp_pin_map) {
     digitalWrite(led.second, LOW);
   }
 }
@@ -94,16 +106,27 @@ void run_pattern(int pattern) {
   }
 }
 
-float readTemperature()
-{
+float readTemperature() {
   int adcValue = analogRead(TEMP_PIN);
   float voltage = adcValue * VREF / ADC_MAX;
   float tempC = (voltage - 0.5) * 100.0;
   return tempC;
 }
 
-void setup()
-{
+void temp_led_pattern() {
+  reset_temp_leds();
+  if (temperatureC > low_temp) {
+    toggle_pin(temp_pin_map[1]);
+  }
+  if (temperatureC > mid_temp) {
+    toggle_pin(temp_pin_map[2]);
+  }
+  if (temperatureC > high_temp) {
+    toggle_pin(temp_pin_map[3]);
+  }
+}
+
+void setup() {
   // Start serial communication for debugging
   Serial.begin(115200);
 
@@ -150,14 +173,13 @@ void setup()
 }
 
 
-void loop()
-{
+void loop() {
   // 
   if (millis() - lastUpdate > 2000) {
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
-
-      String url = String(server_address) + "?temp=" + readTemperature();
+      temperatureC = readTemperature();
+      String url = String(server_address) + "?temp=" + temperatureC;
       http.begin(url);
 
       int httpResponseCode = http.GET();
@@ -172,5 +194,6 @@ void loop()
     lastUpdate = millis();
   }
   run_pattern(pattern);
+  temp_led_pattern();
 }
 

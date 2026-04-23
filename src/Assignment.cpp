@@ -26,6 +26,9 @@ const char* server_address = "http://192.168.0.15:5000/update";
 #define LED5_PIN 9
 #define LED6_PIN 6
 
+#define ADC_MAX 4095.0
+#define VREF 3.3
+
 std::map<int, int> led_pin_map;
 std::map<int, int> temp_pin_map;
 
@@ -91,6 +94,13 @@ void run_pattern(int pattern) {
   }
 }
 
+float readTemperature()
+{
+  int adcValue = analogRead(TEMP_PIN);
+  float voltage = adcValue * VREF / ADC_MAX;
+  float tempC = (voltage - 0.5) * 100.0;
+  return tempC;
+}
 
 void setup()
 {
@@ -118,6 +128,9 @@ void setup()
   temp_pin_map[2] = TEMP_LED2_PIN;
   temp_pin_map[3] = TEMP_LED3_PIN;
 
+  analogReadResolution(12);
+  analogSetPinAttenuation(TEMP_PIN, ADC_11db);
+
   // Start connecting to WiFi
   WiFi.begin(ssid, password);
 
@@ -144,7 +157,7 @@ void loop()
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
 
-      String url = String(server_address);
+      String url = String(server_address) + "?temp=" + readTemperature();
       http.begin(url);
 
       int httpResponseCode = http.GET();

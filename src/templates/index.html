@@ -12,6 +12,7 @@
       fetch('/data')
       .then(res => res.json())
       .then(data => {
+        document.getElementById("temperature").innerText = data.temperature + " C";
         document.getElementById("pattern").innerText = data.pattern;
       });
     }
@@ -20,7 +21,10 @@
   </script>
 </head>
 <body>
-<h1>LED Control</h1>
+<h1>IoT Assignment</h1>
+<h2>Temperature : <span id="temperature">N/A</span></h2>
+<h2>LED Control</h2>
+<h3>Current Pattern : <span id="pattern">N/A</span></h3>
   <div class="button-container">
     <button onclick="setPattern(0)">Blink Pattern</button>
     <button onclick="setPattern(1)">Chase Pattern</button>

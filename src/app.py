@@ -2,7 +2,7 @@ from flask import Flask, request, render_template
 
 app = Flask(__name__)
 
-set_led = 0
+pattern = 0
 
 @app.route('/')
 def index():
@@ -10,17 +10,17 @@ def index():
 
 @app.route('/update')
 def update():
-    return str(set_led)
+    return str(pattern)
 
-@app.route('/toggle_LED/<int:led>')
-def toggle_LED(led):
-    global set_led
-    set_led = led
+@app.route('/set_pattern/<int:p>')
+def set_pattern(p):
+    global pattern
+    pattern = p
     return "OK"
 
 @app.route('/data')
 def data():
-    return {"led": set_led}
+    return {"pattern": pattern}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

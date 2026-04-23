@@ -1,50 +1,97 @@
 
-// Include WiFi library for network connection
 #include <WiFi.h>
-
-// Include WebServer library to create a small web server
-// running directly on the ESP32
-#include <WebServer.h>
 #include <HTTPClient.h>
-#include <ESPAsyncWebServer.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <map>
 
 
-
-// ---------------- Wi-Fi credentials ----------------
-// SSID and password of the wireless network.
-// These must match the Wi-Fi network you want the ESP32 to connect to.
 const char* ssid = "Christian's_S23";
-const char* password = "Christian"; // CHANGE THIS TO YOUR WIFI PASSWORD
+const char* password = "Christian";
 
-const char* server_name = "http://192.168.0.15:5000/update";
+const char* server_address = "http://192.168.0.15:5000/update";
 
-String led;
 
-unsigned long lastUpdate = 0;
+#define TEMP_PIN 8
 
-// ---------------- TMP36 Sensor Pin ----------------
-// GPIO36 is an analog input pin on the ESP32
-// where the TMP36 temperature sensor output is connected.
+#define TEMP_LED1_PIN 5
+#define TEMP_LED2_PIN 4
+#define TEMP_LED3_PIN 3
+
 #define LED1_PIN 13
 #define LED2_PIN 12
 #define LED3_PIN 11
+#define LED4_PIN 10
+#define LED5_PIN 9
+#define LED6_PIN 6
 
-std::map<String, int> pin_map;
-// Create a web server object listening on port 80
-// Port 80 is the default HTTP port used by web browsers
+std::map<int, int> led_pin_map;
+std::map<int, int> temp_pin_map;
+
+int pattern;
+
+long lastUpdate = 0;
+
+void reset_leds() {
+  for (auto led : led_pin_map) {
+    digitalWrite(led.second, LOW);
+  }
+}
 
 void toggle_pin(uint8_t pin) {
   digitalWrite(pin, !digitalRead(pin));
 }
 
-// ---------------------------------------------------
-// Function: setup()es
-// Runs once when the ESP32 starts
-// ---------------------------------------------------
+void blink_pattern() {
+  for (int i = 0; i < 2; i++) {
+    for (auto led : led_pin_map) {
+      toggle_pin(led.second);
+    }
+    delay(300);
+  }
+}
+
+void chase_pattern() {
+  for (auto led : led_pin_map) {
+      toggle_pin(led.second);
+      delay(100);
+      toggle_pin(led.second);
+    }
+}
+
+void random_pattern() {
+  reset_leds();
+  for (auto led : led_pin_map) {
+    if (random(0,2) == 0) {
+      toggle_pin(led.second);
+    }
+  }
+  delay(300);
+}
+
+void rainbow_pattern() {
+  for (int i = 1; i <= 3; i++) {
+    for (auto led : led_pin_map) {
+      if ((led.first - i) % 3 == 0) {
+        toggle_pin(led.second);
+      }
+    }
+    delay(300);
+    reset_leds();
+  }
+}
+
+void run_pattern(int pattern) {
+  switch (pattern) {
+    case 0: blink_pattern(); break;
+    case 1: chase_pattern(); break;
+    case 2: random_pattern(); break;
+    case 3: rainbow_pattern(); break;
+  }
+}
+
+
 void setup()
 {
   // Start serial communication for debugging
@@ -53,10 +100,23 @@ void setup()
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);
+  pinMode(LED4_PIN, OUTPUT);
+  pinMode(LED5_PIN, OUTPUT);
+  pinMode(LED6_PIN, OUTPUT);
+  pinMode(TEMP_LED1_PIN, OUTPUT);
+  pinMode(TEMP_LED2_PIN, OUTPUT);
+  pinMode(TEMP_LED3_PIN, OUTPUT);
 
-  pin_map["1"] = LED1_PIN;
-  pin_map["2"] = LED2_PIN;
-  pin_map["3"] = LED3_PIN;
+  led_pin_map[1] = LED1_PIN;
+  led_pin_map[2] = LED2_PIN;
+  led_pin_map[3] = LED3_PIN;
+  led_pin_map[4] = LED4_PIN;
+  led_pin_map[5] = LED5_PIN;
+  led_pin_map[6] = LED6_PIN;
+
+  temp_pin_map[1] = TEMP_LED1_PIN;
+  temp_pin_map[2] = TEMP_LED2_PIN;
+  temp_pin_map[3] = TEMP_LED3_PIN;
 
   // Start connecting to WiFi
   WiFi.begin(ssid, password);
@@ -71,37 +131,33 @@ void setup()
   }
 
   // Once connected, print IP address
+  Serial.println("\nWiFi Connected");
   Serial.println(WiFi.localIP());
 
 }
 
 
-
-
-// ---------------------------------------------------
-// Function: loop()
-// Runs continuously after setup()
-// ---------------------------------------------------
 void loop()
 {
-  if (millis() - lastUpdate > 3000) {
+  // 
+  if (millis() - lastUpdate > 2000) {
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
 
-      String url = String(server_name);
+      String url = String(server_address);
       http.begin(url);
 
       int httpResponseCode = http.GET();
 
       if (httpResponseCode > 0) {
         String response = http.getString();
-        led = response;  // server returns led ID
+        pattern = response.toInt();  
       }
 
       http.end();
     }
     lastUpdate = millis();
   }
-  toggle_pin(pin_map[led]);
+  run_pattern(pattern);
 }
 

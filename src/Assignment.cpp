@@ -5,7 +5,7 @@
 // Include WebServer library to create a small web server
 // running directly on the ESP32
 #include <WebServer.h>
-
+#include <HTTPClient.h>
 #include <ESPAsyncWebServer.h>
 #include <fstream>
 #include <iostream>
@@ -20,6 +20,12 @@
 const char* ssid = "Christian's_S23";
 const char* password = "Christian"; // CHANGE THIS TO YOUR WIFI PASSWORD
 
+const char* server_name = "http://192.168.0.15:5000/update";
+
+String led;
+
+unsigned long lastUpdate = 0;
+
 // ---------------- TMP36 Sensor Pin ----------------
 // GPIO36 is an analog input pin on the ESP32
 // where the TMP36 temperature sensor output is connected.
@@ -30,7 +36,6 @@ const char* password = "Christian"; // CHANGE THIS TO YOUR WIFI PASSWORD
 std::map<String, int> pin_map;
 // Create a web server object listening on port 80
 // Port 80 is the default HTTP port used by web browsers
-AsyncWebServer server(80);
 
 void toggle_pin(uint8_t pin) {
   digitalWrite(pin, !digitalRead(pin));
@@ -68,35 +73,6 @@ void setup()
   // Once connected, print IP address
   Serial.println(WiFi.localIP());
 
-
-  // Serve the HTML page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    // serves the contents of index.html
-    String file_path = "index.html";
-    std::ifstream file(file_path.c_str());
-    std::stringstream buffer;
-
-    buffer << file.rdbuf();
-    String file_string = String(buffer.str().c_str());
-
-    request->send(200, "text/html", file_string);
-  });
-
-  // Handle toggle requests
-  server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String ledParam;
-    if (request->hasParam("led")) {
-      ledParam = request->getParam("led")->value();
-      int pin_number = pin_map[ledParam];
-      toggle_pin(pin_number);
-      request->send(200, "text/plain", "OK");
-    }
-
-    request->send(400, "text/plain", "Bad Request"); 
-  });
-
-  // Start the web server
-  server.begin();
 }
 
 
@@ -108,6 +84,24 @@ void setup()
 // ---------------------------------------------------
 void loop()
 {
-  // Handle incoming client requests
-  // (e.g., browser requests for webpage or temperature)
+  if (millis() - lastUpdate > 3000) {
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+
+      String url = String(server_name);
+      http.begin(url);
+
+      int httpResponseCode = http.GET();
+
+      if (httpResponseCode > 0) {
+        String response = http.getString();
+        led = response;  // server returns led ID
+      }
+
+      http.end();
+    }
+    lastUpdate = millis();
+  }
+  toggle_pin(pin_map[led]);
 }
+

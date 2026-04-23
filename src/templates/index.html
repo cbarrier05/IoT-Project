@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>IoT Dashboard</title>
+  <script>
+    function toggleLED(led) {
+      fetch('/toggle_LED/' + led);
+    }
+
+    function refreshData() {
+      fetch('/data')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("set_led").innerText = data.set_led;
+      });
+    }
+
+    setInterval(refreshData, 2000);
+  </script>
+
+  <style>
+    .button-container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .button-container > button {
+      background-color: maroon;
+      border-radius: 3px;
+    }
+
+    .active {
+      background-color: green;
+    }
+  </style>
+</head>
+<body>
+<h1>LED Control</h1>
+  <div class="button-container">
+    <button onclick="setPattern(1)">LED 1</button>
+    <button onclick="setPattern(2)">LED 2</button>
+    <button onclick="setPattern(3)">LED 3</button>
+  </div>
+</body> 
+
+</html>

@@ -8,6 +8,10 @@
       fetch('/set_pattern/' + p);
     }
 
+    function setCustom(c) {
+      fetch('/set_custom/' + c)
+    }
+
     function refreshData() {
       fetch('/data')
       .then(res => res.json())
@@ -30,7 +34,15 @@
     <button onclick="setPattern(1)">Chase Pattern</button>
     <button onclick="setPattern(2)">Random Pattern</button>
     <button onclick="setPattern(3)">Rainbow Pattern</button>
+    <button onclick="setPattern(4)">Custom Pattern</button>
   </div>
+<h3>Custom Pattern Options</h3>
+  <button onclick="setCustom(0)">LED 1</button>
+  <button onclick="setCustom(1)">LED 2</button>
+  <button onclick="setCustom(2)">LED 3</button>
+  <button onclick="setCustom(3)">LED 4</button>
+  <button onclick="setCustom(4)">LED 5</button>
+  <button onclick="setCustom(5)">LED 6</button>
 </body> 
 
 </html>

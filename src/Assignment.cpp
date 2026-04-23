@@ -10,15 +10,12 @@
 const char* ssid = "Christian's_S23";
 const char* password = "Christian";
 
-const char* server_address = "http://192.168.0.15:5000/update";
-
+const char* server_address = "http://192.168.0.15:5000";
 
 #define TEMP_PIN 8
-
 #define TEMP_LED1_PIN 5
 #define TEMP_LED2_PIN 4
 #define TEMP_LED3_PIN 3
-
 #define LED1_PIN 13
 #define LED2_PIN 12
 #define LED3_PIN 11
@@ -59,6 +56,7 @@ void toggle_pin(uint8_t pin) {
 }
 
 void blink_pattern() {
+  reset_leds();
   for (int i = 0; i < 2; i++) {
     for (auto led : led_pin_map) {
       toggle_pin(led.second);
@@ -68,6 +66,7 @@ void blink_pattern() {
 }
 
 void chase_pattern() {
+  reset_leds();
   for (auto led : led_pin_map) {
       toggle_pin(led.second);
       delay(100);
@@ -86,6 +85,7 @@ void random_pattern() {
 }
 
 void rainbow_pattern() {
+  reset_leds();
   for (int i = 1; i <= 3; i++) {
     for (auto led : led_pin_map) {
       if ((led.first - i) % 3 == 0) {
@@ -96,6 +96,30 @@ void rainbow_pattern() {
     reset_leds();
   }
 }
+void custom_pattern() {
+  HTTPClient http;
+  String url = String(server_address) + "/get_custom";
+  http.begin(url);
+  int custom_leds[6] = {0,0,0,0,0,0};
+  int httpResponseCode = http.GET();
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    for (auto pin : response) {
+      int pin_index = pin - '0';
+      custom_leds[pin_index] = 1;
+    }
+  }
+  reset_leds();
+  for (int i = 0; i < 6; i++) {
+    if (custom_leds[i] == 1) {
+      toggle_pin(led_pin_map[i+1]);
+    }
+  }
+
+  http.end();
+  
+  delay(300);
+}
 
 void run_pattern(int pattern) {
   switch (pattern) {
@@ -103,6 +127,7 @@ void run_pattern(int pattern) {
     case 1: chase_pattern(); break;
     case 2: random_pattern(); break;
     case 3: rainbow_pattern(); break;
+    case 4: custom_pattern(); break;
   }
 }
 
@@ -179,7 +204,7 @@ void loop() {
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
       temperatureC = readTemperature();
-      String url = String(server_address) + "?temp=" + temperatureC;
+      String url = String(server_address) + "/update" + "?temp=" + temperatureC;
       http.begin(url);
 
       int httpResponseCode = http.GET();

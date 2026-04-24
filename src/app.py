@@ -29,7 +29,7 @@ def set_pattern(p):
     return "OK"
 
 @app.route('/set_custom', methods=['POST'])
-def set_custom(c):
+def set_custom():
     global custom_frames, custom_delay
     data = request.get_json()
     if data:

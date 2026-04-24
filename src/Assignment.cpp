@@ -33,7 +33,7 @@ bool custom_pattern[6 * 8];
 int custom_frame_delay = 0;
 int custom_frame_count = 0;
 
-int frame
+int frame;
 int pattern;
 
 long lastUpdate = 0;
@@ -129,10 +129,10 @@ void get_custom_pattern() {
   http.end();
 }
 
-void custom_pattern() {
+void set_custom_pattern() {
   if (custom_frame_count == 0) return;
 
-  for (int frame = 0; frame < custom_frame_count; f++) {
+  for (int frame = 0; frame < custom_frame_count; frame++) {
     reset_leds();
     for (int i = 0; i < 6; i++) {
       if (custom_pattern[frame * 6 + i]) {
@@ -149,7 +149,7 @@ void run_pattern(int pattern) {
     case 1: chase_pattern(); break;
     case 2: random_pattern(); break;
     case 3: rainbow_pattern(); break;
-    case 4: custom_pattern(); break;
+    case 4: set_custom_pattern(); break;
     default: break;
   }
 }

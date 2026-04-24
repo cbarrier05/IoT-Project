@@ -22,6 +22,7 @@
       display: flex;
       flex-direction: row;
       gap: 20px;
+      align-items: flex-start;
     }
 
     #temperature-graph {
@@ -70,6 +71,20 @@
       height: 16px;
       margin: 2px;
       background-color: grey;
+      cursor: pointer;
+    }
+
+    .led-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .frame-label {
+      width: 70px;
+      text-align: right;
+      margin-right: 10px;
     }
 
     select, ::picker(select) {
@@ -105,7 +120,7 @@
   <script>
     const dataUpdateDelay = 2000;
 
-    const frameCap = 8;
+    const frameCap = 12;
     var framesShown = 1;
     var currentFrame = 0;
     var customState = [];
@@ -177,46 +192,6 @@
       });
     }
 
-    function nextFrame() {
-      if (currentFrame < framesShown - 1) {
-        currentFrame++;
-        updateFrameButtons();
-      }
-    }
-
-    function prevFrame() {
-      if (currentFrame > 0) {
-        currentFrame--;
-        updateFrameButtons();
-      }
-    }
-
-    // called when prev/next is pressed. updates the current frame counter and relevant displayed checkboxes
-    function updateFrameButtons() {
-      const prevFrame = document.getElementById('prev-frame');
-      const nextFrame = document.getElementById('next-frame');
-      const frameDisplay = document.getElementById('frame-number');
-
-      if (currentFrame <= 0) {
-        prevFrame.disabled = true;
-      } else {
-        prevFrame.disabled = false;
-      }
-
-      if (currentFrame >= frameCap - 1 || currentFrame >= framesShown - 1) {
-        nextFrame.disabled = true;
-      } else {
-        nextFrame.disabled = false;
-      }
-
-      const frameData = customState[currentFrame];
-      for (var i = 0; i < frameData.length; i++) {
-        checkboxes[i].checked = frameData[i];
-      }
-
-      frameDisplay.textContent = "Frame " + (currentFrame + 1);
-    }
-
     // called to initialise the frame data buffer and relevant display info
     function populateFrameSelector() {
       const frameSelector = document.getElementById('frame-count');
@@ -231,26 +206,17 @@
       for (var i = 0; i < framesShown; i++) {
         customState.push([false, false, false, false, false, false]);
       }
-    }
 
-    // updates the current frame with checkbox information. called when checkboxes are changed
-    function updateCustom() {
-      const state = [];
-      for (const checkbox of checkboxes) {
-        state.push(checkbox.checked);
-      }
-      customState[currentFrame] = state;
+      renderLedGrid();
     }
 
     // tracks updates to frame count through the 'frames shown' input
     // when an update happens, modifies relevant frame data to ensure that data length matches
     // checkbox page length
     function changeFrames() {
-      const newFrames = document.getElementById('frame-count').value;
-      const frameDisplay = document.getElementById('frame-number');
-
-      framesShown = newFrames;
-      var lengthChange = newFrames - customState.length;
+      const newFrames = parseInt(document.getElementById('frame-count').value);
+      const lengthChange = newFrames - customState.length;
+      
       if (lengthChange > 0) {
         for (var i = 0; i < lengthChange; i++) {
           customState.push([false, false, false, false, false, false]);
@@ -260,13 +226,37 @@
           customState.pop();
         }
       }
+      
+      framesShown = newFrames;
+      renderLedGrid(); 
+    }
 
-      if (currentFrame > framesShown - 1) {
-        currentFrame = framesShown - 1;
+    function renderLedGrid() {
+      const grid = document.getElementById('led-grid');
+      grid.innerHTML = '';
+
+      for (let r = 0; r < framesShown; r++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'led-row';
+
+        const rowLabel = document.createElement('span');
+        rowLabel.className = 'frame-label';
+        rowLabel.innerText = 'Frame ' + (r + 1);
+        rowDiv.appendChild(rowLabel);
+
+        for (let c = 0; c < 6; c++) {
+          const ledCheckbox = document.createElement('input');
+          ledCheckbox.type = 'checkbox';
+          ledCheckbox.checked = customState[r][c];
+
+          ledCheckbox.addEventListener('change', (e) => {
+            customState[r][c] = e.target.checked;
+          });
+
+          rowDiv.appendChild(ledCheckbox);
+        }
+        grid.appendChild(rowDiv);
       }
-
-      frameDisplay.textContent = "Frame " + (currentFrame + 1);
-      updateFrameButtons();
     }
 
     function changeDelay() {
@@ -276,9 +266,8 @@
 
     // sends a pattern to the flask 'set_custom' data endpoint
     function savePattern() {
-      const activeFrames = customState.slice(0, framesShown);
       const data = {
-        frames: activeFrames,
+        frames: customState,
         delay: frameDelay,
       };
 
@@ -298,12 +287,6 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       populateFrameSelector();
-
-      checkboxes = document.querySelectorAll('.led-checkboxes input[type=checkbox]');
-      for (const checkbox of checkboxes) {
-        checkbox.addEventListener("click", updateCustom);
-      }
-      updateFrameButtons();
     });
   </script>
 </head>
@@ -333,31 +316,21 @@
     </select>
     <div id="custom-pattern">
       <h3 style="margin-top: 0;">Custom Pattern Options</h3>
-      <div style="justify-self: center;"><span id="frame-number">Frame 1</span></div>
-      <div class="led-checkboxes">
-        <input type="checkbox" id="0">
-        <input type="checkbox" id="1">
-        <input type="checkbox" id="2">
-        <input type="checkbox" id="3">
-        <input type="checkbox" id="4">
-        <input type="checkbox" id="5">
-      </div>
-      <div class="control-buttons">
-        <button onclick="prevFrame()" id="prev-frame">Prev</button>
-        <button onclick="nextFrame()" id="next-frame">Next</button>
-      </div>
+      <div style="justify-self: center;"><span id="frame-number">Pattern Data</span></div>
+      <div id="led-grid"></div>
       <div class="control-buttons">
         <div>
-          <label>Frames Shown:</label>
+          <label>Pattern Stages:</label>
           <select id="frame-count" class="select-pattern" onchange="changeFrames()"></select>
         </div>
         <div>
           </label>Delay:</label>
           <select id="custom-delay" class="select-pattern" onchange="changeDelay()">
+            <option value="500">50ms</option>
             <option value="100">100ms</option>
             <option value="200" selected>200ms</option>
             <option value="300">300ms</option>
-            <option value="500">500ms</option>
+            <option value="400">400ms</option>
           </select>
         </div>
       </div>

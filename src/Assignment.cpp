@@ -29,6 +29,11 @@ const char* server_address = "http://192.168.0.15:5000";
 std::map<int, int> led_pin_map;
 std::map<int, int> temp_pin_map;
 
+bool custom_pattern[6 * 8];
+int custom_frame_delay = 0;
+int custom_frame_count = 0;
+
+int frame
 int pattern;
 
 long lastUpdate = 0;
@@ -38,6 +43,8 @@ float temperatureC;
 const float low_temp = 15;
 const float mid_temp = 19;
 const float high_temp = 21;
+
+const int update_period = 2000;
 
 void reset_leds() {
   for (auto led : led_pin_map) {
@@ -96,35 +103,44 @@ void rainbow_pattern() {
     reset_leds();
   }
 }
-void custom_pattern() {
 
-  // Requests the custom LED pattern from the web page
+void get_custom_pattern() {
   HTTPClient http;
   String url = String(server_address) + "/get_custom";
   http.begin(url);
-  int custom_leds[6] = {0,0,0,0,0,0};
   int httpResponseCode = http.GET();
 
-  // Creates an array of 0/1s to represent desired LED status
   if (httpResponseCode > 0) {
     String response = http.getString();
-    for (auto pin_num : response) {
-      int pin_index = pin_num - '0';
-      custom_leds[pin_index] = 1;
+    // splits into [delay,data]
+    int split = response.indexOf(',');
+
+    if (split != -1) {
+      custom_frame_delay = response.substring(0, split).toInt();
+      String ledData = response.substring(split + 1, response.length() - 1);
+
+      custom_frame_count = ledData.length() / 6;
+      // decodes python flask format back into bools
+      for (int i = 0; i < ledData.length(); i++) {
+        custom_pattern[i] = (ledData[i] == '1');
+      }
     }
   }
-  reset_leds();
-
-  // Sets LEDs to desired positions
-  for (int i = 0; i < 6; i++) {
-    if (custom_leds[i] == 1) {
-      toggle_pin(led_pin_map[i+1]);
-    }
-  }
-
   http.end();
-  
-  delay(300);
+}
+
+void custom_pattern() {
+  if (custom_frame_count == 0) return;
+
+  for (int frame = 0; frame < custom_frame_count; f++) {
+    reset_leds();
+    for (int i = 0; i < 6; i++) {
+      if (custom_pattern[frame * 6 + i]) {
+        digitalWrite(led_pin_map[i + 1], HIGH);
+      }
+    }
+    delay(custom_frame_delay);
+  }
 }
 
 void run_pattern(int pattern) {
@@ -134,6 +150,7 @@ void run_pattern(int pattern) {
     case 2: random_pattern(); break;
     case 3: rainbow_pattern(); break;
     case 4: custom_pattern(); break;
+    default: break;
   }
 }
 
@@ -206,7 +223,7 @@ void setup() {
 
 void loop() {
   // Sends/Receives update every 2 seconds
-  if (millis() - lastUpdate > 2000) {
+  if (millis() - lastUpdate >= update_period) {
     if (WiFi.status() == WL_CONNECTED) {
       // Sends the latest temperature reading to the web server and receives the desired LED pattern
       HTTPClient http;
@@ -222,6 +239,10 @@ void loop() {
       }
 
       http.end();
+
+      if (pattern == 4) {
+        get_custom_pattern();
+      }
     }
     lastUpdate = millis();
   }

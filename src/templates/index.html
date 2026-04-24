@@ -5,20 +5,117 @@
   <title>IoT Dashboard</title>
 
   <style>
+    :root {
+      --background-color: rgb(24, 23, 23);
+      --container-color: rgb(34, 33, 33);
+      --tertiary-container-color: rgb(41, 38, 38);
+      --text-color: rgb(211, 197, 197);
+
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    .flex-container {
+      width: 90%;
+      justify-self: center;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+
+    #temperature-graph {
+      justify-self: center;
+      max-width: 80%;
+    }
+
+    .content-container {
+      background-color: var(--container-color);
+      border-radius: 20px;
+      padding: 1%;
+    }
+
+    h1 {
+      justify-self: center;
+    }
+
+    h2 {
+      margin-top: 5px;
+    }
+
     button.active {
       background-color: blue;
     }
 
-    #customPattern {
+    #custom-pattern {
       display: none;
+      padding: 2%;
+      margin: 2%;
+      background-color: var(--tertiary-container-color);
+      border-radius: 10px;
+    }
+
+    .control-buttons {
+      justify-self: center;
+      display: flex;
+      gap: 10px;
+    }
+
+    .led-checkboxes {
+      justify-self: center;
+    }
+
+    .led-checkboxes > input[type=checkbox] {
+      width: 16px;
+      height: 16px;
+      margin: 2px;
+      background-color: grey;
+    }
+
+    select, ::picker(select) {
+      appearance: base-select;
+    }
+
+    select {
+      padding: 1px;
+      margin: 2px;
+      border-radius: 3px;
+      background: var(--container-color);
+      color: var(--text-color);
+    }
+
+    select > option {
+      transition: 0.2s;
+      background-color: var(--container-color);
+      color: var(--text-color);
+    }
+
+    select > option:checked, select > option:hover {
+      background-color: var(--background-color);
+    }
+
+    @media (max-width: 900px) {
+      .flex-container {
+        flex-direction: column;
+      }
     }
   </style>
 
+  <script src="https://cdn.plot.ly/plotly-3.4.0.min.js" charset="utf-8"></script>
   <script>
+    const dataUpdateDelay = 2000;
+
+    const frameCap = 8;
+    var framesShown = 1;
+    var currentFrame = 0;
+    var customState = [];
+    var checkboxes = [];
+    var frameDelay = 200;
+
     function setPattern(p) {
       fetch('/set_pattern/' + p);
 
-      customBlock = document.getElementById("customPattern")
+      customBlock = document.getElementById("custom-pattern")
       if (p == 4) {
         customBlock.style.display = "block";
       } else {
@@ -42,29 +139,234 @@
       });
     }
 
-    setInterval(refreshData, 2000);
+    function changePattern() {
+      const patternSelector = document.getElementById('pattern-selector');
+      const selectedValue = patternSelector.value;
+      
+      setPattern(selectedValue);
+    }
+
+    const graphDiv = document.getElementById('temperature-graph');
+    const layout = {
+      title: {
+        text: 'Temperature History'
+      },
+      xaxis: {
+        title: {
+          text: 'Time Since Reading (s)'
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Temperature (°C)'
+        }
+      }
+    }
+
+    function updateGraph() {
+      fetch('/set_graph')
+        .then(res => res.json())
+        .then(data => {
+          var tempTrace = {
+            x: data.time_history,
+            y: data.temp_history,
+            mode: 'lines+markers',
+          }
+
+          Plotly.react(graphDiv, [tempTrace], layout);
+      });
+    }
+
+    function nextFrame() {
+      if (currentFrame < framesShown - 1) {
+        currentFrame++;
+        updateFrameButtons();
+      }
+    }
+
+    function prevFrame() {
+      if (currentFrame > 0) {
+        currentFrame--;
+        updateFrameButtons();
+      }
+    }
+
+    // called when prev/next is pressed. updates the current frame counter and relevant displayed checkboxes
+    function updateFrameButtons() {
+      const prevFrame = document.getElementById('prev-frame');
+      const nextFrame = document.getElementById('next-frame');
+      const frameDisplay = document.getElementById('frame-number');
+
+      if (currentFrame <= 0) {
+        prevFrame.disabled = true;
+      } else {
+        prevFrame.disabled = false;
+      }
+
+      if (currentFrame >= frameCap - 1 || currentFrame >= framesShown - 1) {
+        nextFrame.disabled = true;
+      } else {
+        nextFrame.disabled = false;
+      }
+
+      const frameData = customState[currentFrame];
+      for (var i = 0; i < frameData.length; i++) {
+        checkboxes[i].checked = frameData[i];
+      }
+
+      frameDisplay.textContent = "Frame " + (currentFrame + 1);
+    }
+
+    // called to initialise the frame data buffer and relevant display info
+    function populateFrameSelector() {
+      const frameSelector = document.getElementById('frame-count');
+
+      for (var i = 1; i <= frameCap; i++) {
+        var frameOption = document.createElement("option");
+        frameOption.value = i;
+        frameOption.text = i;
+        frameSelector.add(frameOption);
+      }
+
+      for (var i = 0; i < framesShown; i++) {
+        customState.push([false, false, false, false, false, false]);
+      }
+    }
+
+    // updates the current frame with checkbox information. called when checkboxes are changed
+    function updateCustom() {
+      const state = [];
+      for (const checkbox of checkboxes) {
+        state.push(checkbox.checked);
+      }
+      customState[currentFrame] = state;
+    }
+
+    // tracks updates to frame count through the 'frames shown' input
+    // when an update happens, modifies relevant frame data to ensure that data length matches
+    // checkbox page length
+    function changeFrames() {
+      const newFrames = document.getElementById('frame-count').value;
+      const frameDisplay = document.getElementById('frame-number');
+
+      framesShown = newFrames;
+      var lengthChange = newFrames - customState.length;
+      if (lengthChange > 0) {
+        for (var i = 0; i < lengthChange; i++) {
+          customState.push([false, false, false, false, false, false]);
+        }
+      } else if (lengthChange < 0) {
+        for (var i = 0; i < Math.abs(lengthChange); i++) {
+          customState.pop();
+        }
+      }
+
+      if (currentFrame > framesShown - 1) {
+        currentFrame = framesShown - 1;
+      }
+
+      frameDisplay.textContent = "Frame " + (currentFrame + 1);
+      updateFrameButtons();
+    }
+
+    function changeDelay() {
+      const newDelay = document.getElementById('custom-delay').value;
+      frameDelay = parseInt(newDelay);
+    }
+
+    // sends a pattern to the flask 'set_custom' data endpoint
+    function savePattern() {
+      const activeFrames = customState.slice(0, framesShown);
+      const data = {
+        frames: activeFrames,
+        delay: frameDelay,
+      };
+
+      fetch('/set_custom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+    }
+
+    setInterval(() => {
+      refreshData();
+      updateGraph();
+    }, dataUpdateDelay);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      populateFrameSelector();
+
+      checkboxes = document.querySelectorAll('.led-checkboxes input[type=checkbox]');
+      for (const checkbox of checkboxes) {
+        checkbox.addEventListener("click", updateCustom);
+      }
+      updateFrameButtons();
+    });
   </script>
 </head>
+
 <body>
 <h1>IoT Assignment</h1>
-<h2>Temperature : <span id="temperature">N/A</span></h2>
-<h2>LED Control</h2>
-<h3>Current Pattern : <span id="pattern">N/A</span></h3>
-<div class="button-container">
-  <button onclick="setPattern(0)">Blink Pattern</button>
-  <button onclick="setPattern(1)">Chase Pattern</button>
-  <button onclick="setPattern(2)">Random Pattern</button>
-  <button onclick="setPattern(3)">Rainbow Pattern</button>
-  <button onclick="setPattern(4)">Custom Pattern</button>
-</div>
-<div id="customPattern">
-  <h3>Custom Pattern Options</h3>
-  <button onclick="setCustom(0, this)">LED 1</button>
-  <button onclick="setCustom(1, this)">LED 2</button>
-  <button onclick="setCustom(2, this)">LED 3</button>
-  <button onclick="setCustom(3, this)">LED 4</button>
-  <button onclick="setCustom(4, this)">LED 5</button>
-  <button onclick="setCustom(5, this)">LED 6</button>
+
+<div class="flex-container">
+  <div class="content-container" style="flex-basis: 60%;">
+    <h2>Temperature</h2>
+    <div id="temperature-graph"></div>
+    <span id="temperature">N/A</span>
+  </div>
+
+  <div class="content-container" style="flex-basis: 40%;">
+    <h2>LED Control</h2>
+    <h3>Current Pattern</h3>
+    <span id="pattern">N/A</span>
+    <h3>Select Pattern</h3>
+    <select id="pattern-selector" class="select-pattern" onchange="changePattern()">
+      <option value="-1" selected>None</option>
+      <option value="0">Blink</option>
+      <option value="1">Chase</option>
+      <option value="2">Random</option>
+      <option value="3">Rainbow</option>
+      <option value="4">Custom</option>
+    </select>
+    <div id="custom-pattern">
+      <h3 style="margin-top: 0;">Custom Pattern Options</h3>
+      <div style="justify-self: center;"><span id="frame-number">Frame 1</span></div>
+      <div class="led-checkboxes">
+        <input type="checkbox" id="0">
+        <input type="checkbox" id="1">
+        <input type="checkbox" id="2">
+        <input type="checkbox" id="3">
+        <input type="checkbox" id="4">
+        <input type="checkbox" id="5">
+      </div>
+      <div class="control-buttons">
+        <button onclick="prevFrame()" id="prev-frame">Prev</button>
+        <button onclick="nextFrame()" id="next-frame">Next</button>
+      </div>
+      <div class="control-buttons">
+        <div>
+          <label>Frames Shown:</label>
+          <select id="frame-count" class="select-pattern" onchange="changeFrames()"></select>
+        </div>
+        <div>
+          </label>Delay:</label>
+          <select id="custom-delay" class="select-pattern" onchange="changeDelay()">
+            <option value="100">100ms</option>
+            <option value="200" selected>200ms</option>
+            <option value="300">300ms</option>
+            <option value="500">500ms</option>
+          </select>
+        </div>
+      </div>
+      <div class="control-buttons">
+        <button onclick="savePattern()">Save</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 </body> 
 

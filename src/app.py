@@ -4,7 +4,10 @@ app = Flask(__name__)
 
 pattern = 0
 temperature = 0
-custom = []
+temp_data = [0.0 for i in range(20)]
+
+custom_frames = []
+custom_delay = 200
 
 @app.route('/')
 def index():
@@ -15,6 +18,7 @@ def update():
     global temperature
     temp = request.args.get('temp')
     if temp:
+        update_graph(float(temp))
         temperature = temp
     return str(pattern)
 
@@ -24,22 +28,24 @@ def set_pattern(p):
     pattern = p
     return "OK"
 
-@app.route('/set_custom/<int:c>')
+@app.route('/set_custom', methods=['POST'])
 def set_custom(c):
-    global custom
-    if c in custom:
-        custom.remove(c)
-    else:
-        custom.append(c)
+    global custom_frames, custom_delay
+    data = request.get_json()
+    if data:
+        custom_frames = data.get('frames', [])
+        custom_delay = data.get('delay', 200)
     return "OK"
 
 # Returns the current position of custom LEDs
 @app.route('/get_custom')
 def get_custom():
     custom_string = ""
-    for led in custom:
-        custom_string += str(led)
-    return custom_string
+    for frame in custom_frames:
+        for led in frame:
+            custom_string += "1" if led else "0"
+
+    return f"{custom_delay},{custom_string}"
 
 # Forwards the data from the web server to the web page
 @app.route('/data')
@@ -58,6 +64,20 @@ def data():
         case _:
             pattern_name = "N/A"
     return {"temperature": temperature, "pattern": pattern_name}
+
+@app.route('/set_graph')
+def set_graph():
+    global temp_data
+    time_data = [i * 2 for i in range(len(temp_data))]
+    return {
+        "temp_history": temp_data,
+        "time_history": time_data
+    }
+
+def update_graph(t: float):
+    global temp_data
+    temp_data.insert(0, t)
+    temp_data.pop()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -33,6 +33,7 @@ def set_custom(c):
         custom.append(c)
     return "OK"
 
+# Returns the current position of custom LEDs
 @app.route('/get_custom')
 def get_custom():
     custom_string = ""
@@ -40,6 +41,7 @@ def get_custom():
         custom_string += str(led)
     return custom_string
 
+# Forwards the data from the web server to the web page
 @app.route('/data')
 def data():
     match pattern:

@@ -6,7 +6,7 @@
 #include <sstream>
 #include <map>
 
-
+// Update to the desired WiFi network
 const char* ssid = "Christian's_S23";
 const char* password = "Christian";
 
@@ -97,19 +97,25 @@ void rainbow_pattern() {
   }
 }
 void custom_pattern() {
+
+  // Requests the custom LED pattern from the web page
   HTTPClient http;
   String url = String(server_address) + "/get_custom";
   http.begin(url);
   int custom_leds[6] = {0,0,0,0,0,0};
   int httpResponseCode = http.GET();
+
+  // Creates an array of 0/1s to represent desired LED status
   if (httpResponseCode > 0) {
     String response = http.getString();
-    for (auto pin : response) {
-      int pin_index = pin - '0';
+    for (auto pin_num : response) {
+      int pin_index = pin_num - '0';
       custom_leds[pin_index] = 1;
     }
   }
   reset_leds();
+
+  // Sets LEDs to desired positions
   for (int i = 0; i < 6; i++) {
     if (custom_leds[i] == 1) {
       toggle_pin(led_pin_map[i+1]);
@@ -152,7 +158,6 @@ void temp_led_pattern() {
 }
 
 void setup() {
-  // Start serial communication for debugging
   Serial.begin(115200);
 
   pinMode(LED1_PIN, OUTPUT);
@@ -176,6 +181,7 @@ void setup() {
   temp_pin_map[2] = TEMP_LED2_PIN;
   temp_pin_map[3] = TEMP_LED3_PIN;
 
+  // Temperature Sensor Tuning
   analogReadResolution(12);
   analogSetPinAttenuation(TEMP_PIN, ADC_11db);
 
@@ -199,9 +205,10 @@ void setup() {
 
 
 void loop() {
-  // 
+  // Sends/Receives update every 2 seconds
   if (millis() - lastUpdate > 2000) {
     if (WiFi.status() == WL_CONNECTED) {
+      // Sends the latest temperature reading to the web server and receives the desired LED pattern
       HTTPClient http;
       temperatureC = readTemperature();
       String url = String(server_address) + "/update" + "?temp=" + temperatureC;
@@ -218,6 +225,8 @@ void loop() {
     }
     lastUpdate = millis();
   }
+
+  // Refreshes the LED patterns 
   run_pattern(pattern);
   temp_led_pattern();
 }

@@ -6,7 +6,7 @@ Christian Barrier and Jake Sutcliffe
 # TODO
 
 ## Code
-- Improve Web UI (e.g. change colour of selected buttons)
+- Improve Web UI
 - Proper Code Comments and Readability
 - Add Appropriate Instructions To README (How to start server, connect WiFi etc)
 - (Optional) Log sensor data and display as graph

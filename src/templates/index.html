@@ -3,13 +3,34 @@
 <html>
 <head>
   <title>IoT Dashboard</title>
+
+  <style>
+    button.active {
+      background-color: blue;
+    }
+
+    #customPattern {
+      display: none;
+    }
+  </style>
+
   <script>
     function setPattern(p) {
       fetch('/set_pattern/' + p);
+
+      customBlock = document.getElementById("customPattern")
+      if (p == 4) {
+        customBlock.style.display = "block";
+      } else {
+        customBlock.style.display = "none";
+      }
+
     }
 
-    function setCustom(c) {
+    function setCustom(c, btn) {
       fetch('/set_custom/' + c)
+
+      btn.classList.toggle("active");
     }
 
     function refreshData() {
@@ -29,20 +50,22 @@
 <h2>Temperature : <span id="temperature">N/A</span></h2>
 <h2>LED Control</h2>
 <h3>Current Pattern : <span id="pattern">N/A</span></h3>
-  <div class="button-container">
-    <button onclick="setPattern(0)">Blink Pattern</button>
-    <button onclick="setPattern(1)">Chase Pattern</button>
-    <button onclick="setPattern(2)">Random Pattern</button>
-    <button onclick="setPattern(3)">Rainbow Pattern</button>
-    <button onclick="setPattern(4)">Custom Pattern</button>
-  </div>
-<h3>Custom Pattern Options</h3>
-  <button onclick="setCustom(0)">LED 1</button>
-  <button onclick="setCustom(1)">LED 2</button>
-  <button onclick="setCustom(2)">LED 3</button>
-  <button onclick="setCustom(3)">LED 4</button>
-  <button onclick="setCustom(4)">LED 5</button>
-  <button onclick="setCustom(5)">LED 6</button>
+<div class="button-container">
+  <button onclick="setPattern(0)">Blink Pattern</button>
+  <button onclick="setPattern(1)">Chase Pattern</button>
+  <button onclick="setPattern(2)">Random Pattern</button>
+  <button onclick="setPattern(3)">Rainbow Pattern</button>
+  <button onclick="setPattern(4)">Custom Pattern</button>
+</div>
+<div id="customPattern">
+  <h3>Custom Pattern Options</h3>
+  <button onclick="setCustom(0, this)">LED 1</button>
+  <button onclick="setCustom(1, this)">LED 2</button>
+  <button onclick="setCustom(2, this)">LED 3</button>
+  <button onclick="setCustom(3, this)">LED 4</button>
+  <button onclick="setCustom(4, this)">LED 5</button>
+  <button onclick="setCustom(5, this)">LED 6</button>
+</div>
 </body> 
 
 </html>

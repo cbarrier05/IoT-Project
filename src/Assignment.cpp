@@ -26,8 +26,15 @@ const char* server_address = "http://192.168.0.15:5000";
 #define ADC_MAX 4095.0
 #define VREF 3.3
 
-std::map<int, int> led_pin_map;
-std::map<int, int> temp_pin_map;
+
+typedef struct {
+  int pin_num;
+  String colour;
+  int state;
+} Pin_info;
+
+std::map<int, Pin_info > led_pin_map;
+std::map<int, Pin_info> temp_pin_map;
 
 bool custom_pattern[6 * 8];
 int custom_frame_delay = 0;
@@ -46,61 +53,68 @@ const float high_temp = 21;
 
 const int update_period = 2000;
 
-void reset_leds() {
-  for (auto led : led_pin_map) {
-    digitalWrite(led.second, LOW);
+void set_leds(int new_states[6]) {
+  for (int i = 0; i < 6; i++) {
+    Pin_info current_pin = led_pin_map[i+1];
+    if (new_states[i] != current_pin.state) {
+      digitalWrite(current_pin.pin_num, new_states[i]);
+      current_pin.state = new_states[i];
+      led_pin_map[i+1] = current_pin;
+    }
   }
 }
 
-void reset_temp_leds() {
-  for (auto led : temp_pin_map) {
-    digitalWrite(led.second, LOW);
+void set_temp_leds(int new_states[3]) {
+  for (int i = 0; i < 3; i++) {
+    Pin_info current_pin = temp_pin_map[i+1];
+    if (new_states[i] != current_pin.state) {
+      digitalWrite(current_pin.pin_num, new_states[i]);
+      current_pin.state = new_states[i];
+      temp_pin_map[i+1] = current_pin;
+    }
   }
-}
-
-void toggle_pin(uint8_t pin) {
-  digitalWrite(pin, !digitalRead(pin));
 }
 
 void blink_pattern() {
-  reset_leds();
-  for (int i = 0; i < 2; i++) {
-    for (auto led : led_pin_map) {
-      toggle_pin(led.second);
-    }
-    delay(300);
-  }
+  int first_state[6] = {1,1,1,1,1,1};
+  set_leds(first_state);
+  delay(300);
+  int second_state[6] = {0,0,0,0,0,0};
+  set_leds(second_state);
+  delay(300);
 }
 
 void chase_pattern() {
-  reset_leds();
-  for (auto led : led_pin_map) {
-      toggle_pin(led.second);
+  for (int i = 0; i < 6; i++) {
+      int new_state[6] = {0,0,0,0,0,0};
+      new_state[i] = 1;
+      set_leds(new_state);
       delay(100);
-      toggle_pin(led.second);
-    }
+  }
 }
 
 void random_pattern() {
-  reset_leds();
-  for (auto led : led_pin_map) {
+  int new_state[6] = {0,0,0,0,0,0};
+  for (int i = 0; i < 6; i++) {
     if (random(0,2) == 0) {
-      toggle_pin(led.second);
+      new_state[i] = 1;
     }
   }
+  set_leds(new_state);
   delay(300);
 }
 
 void rainbow_pattern() {
-  reset_leds();
-  for (int i = 1; i <= 3; i++) {
-    for (auto led : led_pin_map) {
-      if ((led.first - i) % 3 == 0) {
-        toggle_pin(led.second);
+  String colours[] = {"green", "yellow", "red"};
+  for (String colour : colours) {
+    int new_state[6] = {0,0,0,0,0,0};
+    for (int i = 0; i < 6; i++) {
+      if (led_pin_map[i+1].colour == colour) {
+        new_state[i] = 1;
       }
     }
+    set_leds(new_state);
     delay(300);
-    reset_leds();
   }
 }
 
@@ -117,12 +131,12 @@ void get_custom_pattern() {
 
     if (split != -1) {
       custom_frame_delay = response.substring(0, split).toInt();
-      String ledData = response.substring(split + 1, response.length() - 1);
-
+      String ledData = response.substring(split + 1, response.length());
+      Serial.println(ledData);
       custom_frame_count = ledData.length() / 6;
       // decodes python flask format back into bools
       for (int i = 0; i < ledData.length(); i++) {
-        custom_pattern[i] = (ledData[i] == '1');
+        custom_pattern[i] = ledData[i] - '0';
       }
     }
   }
@@ -133,15 +147,17 @@ void set_custom_pattern() {
   if (custom_frame_count == 0) return;
 
   for (int frame = 0; frame < custom_frame_count; frame++) {
-    reset_leds();
+    int new_states[6] = {0,0,0,0,0,0};
     for (int i = 0; i < 6; i++) {
       if (custom_pattern[frame * 6 + i]) {
-        digitalWrite(led_pin_map[i + 1], HIGH);
+       new_states[i] = 1;
       }
     }
+    set_leds(new_states);
     delay(custom_frame_delay);
   }
 }
+
 
 void run_pattern(int pattern) {
   switch (pattern) {
@@ -162,16 +178,18 @@ float readTemperature() {
 }
 
 void temp_led_pattern() {
-  reset_temp_leds();
+  int new_states[3] = {0,0,0};
   if (temperatureC > low_temp) {
-    toggle_pin(temp_pin_map[1]);
+    new_states[0] = 1;
   }
   if (temperatureC > mid_temp) {
-    toggle_pin(temp_pin_map[2]);
+    new_states[1] = 1;
   }
   if (temperatureC > high_temp) {
-    toggle_pin(temp_pin_map[3]);
+    new_states[2] = 1;
   }
+
+  set_temp_leds(new_states);
 }
 
 void setup() {
@@ -187,16 +205,41 @@ void setup() {
   pinMode(TEMP_LED2_PIN, OUTPUT);
   pinMode(TEMP_LED3_PIN, OUTPUT);
 
-  led_pin_map[1] = LED1_PIN;
-  led_pin_map[2] = LED2_PIN;
-  led_pin_map[3] = LED3_PIN;
-  led_pin_map[4] = LED4_PIN;
-  led_pin_map[5] = LED5_PIN;
-  led_pin_map[6] = LED6_PIN;
+  led_pin_map[1].pin_num = LED1_PIN;
+  led_pin_map[1].colour = "green";
+  led_pin_map[1].state = 0;
 
-  temp_pin_map[1] = TEMP_LED1_PIN;
-  temp_pin_map[2] = TEMP_LED2_PIN;
-  temp_pin_map[3] = TEMP_LED3_PIN;
+  led_pin_map[2].pin_num = LED2_PIN;
+  led_pin_map[2].colour = "yellow";
+  led_pin_map[2].state = 0;
+
+  led_pin_map[3].pin_num = LED3_PIN;
+  led_pin_map[3].colour = "red";
+  led_pin_map[3].state = 0;
+
+  led_pin_map[4].pin_num = LED4_PIN;
+  led_pin_map[4].colour = "green";
+  led_pin_map[4].state = 0;
+
+  led_pin_map[5].pin_num = LED5_PIN;
+  led_pin_map[5].colour = "yellow";
+  led_pin_map[5].state = 0;
+
+  led_pin_map[6].pin_num = LED6_PIN;
+  led_pin_map[6].colour = "red";
+  led_pin_map[6].state = 0;
+
+  temp_pin_map[1].pin_num = TEMP_LED1_PIN;
+  temp_pin_map[1].colour = "green";
+  temp_pin_map[1].state = 0;
+
+  temp_pin_map[2].pin_num = TEMP_LED2_PIN;
+  temp_pin_map[2].colour = "yellow";
+  temp_pin_map[2].state = 0;
+
+  temp_pin_map[3].pin_num = TEMP_LED3_PIN;
+  temp_pin_map[3].colour = "red";
+  temp_pin_map[3].state = 0;
 
   // Temperature Sensor Tuning
   analogReadResolution(12);

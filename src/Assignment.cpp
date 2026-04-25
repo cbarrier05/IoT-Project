@@ -36,7 +36,7 @@ typedef struct {
 std::map<int, Pin_info > led_pin_map;
 std::map<int, Pin_info> temp_pin_map;
 
-bool custom_pattern[6 * 8];
+bool custom_pattern[6 * 12];
 int custom_frame_delay = 0;
 int custom_frame_count = 0;
 

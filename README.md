@@ -12,7 +12,6 @@ Christian Barrier and Jake Sutcliffe
 - (Optional) Log sensor data and display as graph
 - (Optional) User Editable boundaries for temperature LEDs
 - (Optional) Responsive Web Design (Mobile Friendly)
-- (Optional) Properly Store Colour Values of LEDS (Current method only uses their known positions)
 ### For High Marks
 - "Production ready": Highly readable, consistently documented and follows industry naming conventions
 - Multiple smooth LED animations

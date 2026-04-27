@@ -132,7 +132,6 @@ void get_custom_pattern() {
     if (split != -1) {
       custom_frame_delay = response.substring(0, split).toInt();
       String ledData = response.substring(split + 1, response.length());
-      Serial.println(ledData);
       custom_frame_count = ledData.length() / 6;
       // decodes python flask format back into bools
       for (int i = 0; i < ledData.length(); i++) {

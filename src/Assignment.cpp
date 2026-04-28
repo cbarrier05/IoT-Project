@@ -47,9 +47,7 @@ long lastUpdate = 0;
 
 float temperatureC;
 
-const float low_temp = 15;
-const float mid_temp = 19;
-const float high_temp = 21;
+std::map<String, int> temp_led_boundaries;
 
 const int update_period = 2000;
 
@@ -177,14 +175,30 @@ float readTemperature() {
 }
 
 void temp_led_pattern() {
+
+  HTTPClient http;
+  String url = String(server_address) + "/get_temp_leds";
+  http.begin(url);
+  int httpResponseCode = http.GET();
+
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    int first_split = response.indexOf(',');
+    temp_led_boundaries["Low"] = response.substring(0, first_split).toInt();
+    String sub_string = response.substring(first_split + 1, response.length());
+    int second_split = sub_string.indexOf(",");
+    temp_led_boundaries["Med"] = sub_string.substring(0, second_split).toInt();
+    temp_led_boundaries["High"] = sub_string.substring(second_split + 1, sub_string.length()).toInt();
+  } 
+
   int new_states[3] = {0,0,0};
-  if (temperatureC > low_temp) {
+  if (temperatureC > temp_led_boundaries["Low"]) {
     new_states[0] = 1;
   }
-  if (temperatureC > mid_temp) {
+  if (temperatureC > temp_led_boundaries["Med"]) {
     new_states[1] = 1;
   }
-  if (temperatureC > high_temp) {
+  if (temperatureC > temp_led_boundaries["High"]) {
     new_states[2] = 1;
   }
 
@@ -239,6 +253,10 @@ void setup() {
   temp_pin_map[3].pin_num = TEMP_LED3_PIN;
   temp_pin_map[3].colour = "red";
   temp_pin_map[3].state = 0;
+
+  temp_led_boundaries["Low"] = 15;
+  temp_led_boundaries["Med"] = 19;
+  temp_led_boundaries["High"] = 21;
 
   // Temperature Sensor Tuning
   analogReadResolution(12);

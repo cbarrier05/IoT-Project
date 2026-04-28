@@ -5,6 +5,7 @@ app = Flask(__name__)
 pattern = 0
 temperature = "N/A"
 temp_data = [0.0 for i in range(20)]
+temp_leds = ["15","19","21"]
 
 custom_frames = []
 custom_delay = 200
@@ -63,7 +64,9 @@ def data():
             pattern_name = "Custom"
         case _:
             pattern_name = "N/A"
-    return {"temperature": temperature, "pattern": pattern_name}
+    return {"temperature": temperature, "pattern": pattern_name, 
+            "temp_led_low": temp_leds[0], "temp_led_med": temp_leds[1], 
+            "temp_led_high": temp_leds[2]}
 
 @app.route('/set_graph')
 def set_graph():
@@ -78,6 +81,17 @@ def update_graph(t: float):
     global temp_data
     temp_data.insert(0, t)
     temp_data.pop()
+
+@app.route('/set_temp_leds/<string:temp_values>')
+def set_temp_leds(temp_values):
+    global temp_leds
+    temp_leds = temp_values.split(',')
+    return "OK"
+
+@app.route('/get_temp_leds')
+def get_temp_leds():
+    temp_led_string = ",".join(temp_leds)
+    return temp_led_string
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

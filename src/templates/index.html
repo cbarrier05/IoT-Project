@@ -56,6 +56,10 @@
       border-radius: 10px;
     }
 
+    #edit_temp_leds {
+      display: none;
+    }
+
     .control-buttons {
       justify-self: center;
       display: flex;
@@ -149,8 +153,11 @@
       fetch('/data')
       .then(res => res.json())
       .then(data => {
-        document.getElementById("temperature").innerText = data.temperature + " C";
+        document.getElementById("temperature").innerText = data.temperature;
         document.getElementById("pattern").innerText = data.pattern;
+        document.getElementById("temp_led_low").innerText = data.temp_led_low;
+        document.getElementById("temp_led_med").innerText = data.temp_led_med;
+        document.getElementById("temp_led_high").innerText = data.temp_led_high;
       });
     }
 
@@ -282,6 +289,23 @@
       });
     }
 
+    function setTempLeds() {
+      const temp_low_value = document.getElementById("edit_low").value.toString()
+      const temp_med_value = document.getElementById("edit_med").value.toString()
+      const temp_high_value = document.getElementById("edit_high").value.toString()
+      temp_values = temp_low_value + "," + temp_med_value + "," + temp_high_value
+
+      tempEditBlock = document.getElementById("edit_temp_leds")
+      tempEditBlock.style.display = "none";
+
+      fetch('/set_temp_leds/' + temp_values);
+    }
+
+    function showTempOption() {
+      tempEditBlock = document.getElementById("edit_temp_leds")
+      tempEditBlock.style.display = "block";
+    }
+
     setInterval(() => {
       refreshData();
       updateGraph();
@@ -299,8 +323,23 @@
 <div class="flex-container">
   <div class="content-container" style="flex-basis: 60%;">
     <h2>Temperature</h2>
+    <h3>Current Temperature</h3>
+    <p><span id="temperature">N/A</span>&#8451</p>
     <div id="temperature-graph"></div>
-    <span id="temperature">N/A</span>
+    <div id="temp_leds">
+      <h3>Temperature LED Boundaries</h3>
+      <p>Low: <span id="temp_led_low">N/A</span>&#8451</p>
+      <p>Medium: <span id="temp_led_med">N/A</span>&#8451</p>
+      <p>High: <span id="temp_led_high">N/A</span>&#8451</p>
+    </div>
+    <button onclick="showTempOption()">Edit Boundaries</button>
+    <div id="edit_temp_leds">
+      <label>Low: <input type="number" id="edit_low" value="0"></label>
+      <label>Med: <input type="number" id="edit_med" value="0"></label>
+      <label>High: <input type="number" id="edit_high" value="0"></label>
+      <br>
+      <button onclick="setTempLeds()">Submit</button>
+    </div>
   </div>
 
   <div class="content-container" style="flex-basis: 40%;">

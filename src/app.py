@@ -6,6 +6,8 @@ pattern = 0
 temperature = "N/A"
 temp_data = [0.0 for i in range(20)]
 temp_leds = ["15","19","21"]
+updated_temp_leds = 1
+updated_custom_pattern = 0
 
 custom_frames = []
 custom_delay = 200
@@ -21,7 +23,12 @@ def update():
     if temp:
         update_graph(float(temp))
         temperature = temp
-    return str(pattern)
+    global updated_temp_leds
+    global updated_custom_pattern
+    return_string = str(pattern) + str(updated_temp_leds) + str(updated_custom_pattern)
+    updated_temp_leds = 0
+    updated_custom_pattern = 0
+    return return_string
 
 @app.route('/set_pattern/<int:p>')
 def set_pattern(p):
@@ -36,6 +43,8 @@ def set_custom():
     if data:
         custom_frames = data.get('frames', [])
         custom_delay = data.get('delay', 200)
+    global updated_custom_pattern
+    updated_custom_pattern = 1
     return "OK"
 
 # Returns the current position of custom LEDs
@@ -53,14 +62,16 @@ def get_custom():
 def data():
     match pattern:
         case 0:
-            pattern_name = "Blink"
+            pattern_name = "None"
         case 1:
-            pattern_name = "Chase"
+            pattern_name = "Blink"
         case 2:
-            pattern_name = "Random"
+            pattern_name = "Chase"
         case 3:
-            pattern_name = "Rainbow"
+            pattern_name = "Random"
         case 4:
+            pattern_name = "Rainbow"
+        case 5:
             pattern_name = "Custom"
         case _:
             pattern_name = "N/A"
@@ -86,6 +97,8 @@ def update_graph(t: float):
 def set_temp_leds(temp_values):
     global temp_leds
     temp_leds = temp_values.split(',')
+    global updated_temp_leds
+    updated_temp_leds = 1
     return "OK"
 
 @app.route('/get_temp_leds')

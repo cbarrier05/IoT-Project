@@ -189,7 +189,7 @@
       fetch('/set_pattern/' + p);
 
       customBlock = document.getElementById("custom-pattern")
-      if (p == 4) {
+      if (p == 5) {
         customBlock.style.display = "block";
       } else {
         customBlock.style.display = "none";
@@ -424,12 +424,12 @@
     <span id="pattern">N/A</span>
     <h3>Select Pattern</h3>
     <select id="pattern-selector" class="select-pattern" onchange="changePattern()">
-      <option value="-1" selected>None</option>
-      <option value="0">Blink</option>
-      <option value="1">Chase</option>
-      <option value="2">Random</option>
-      <option value="3">Rainbow</option>
-      <option value="4">Custom</option>
+      <option value="0" selected>None</option>
+      <option value="1">Blink</option>
+      <option value="2">Chase</option>
+      <option value="3">Random</option>
+      <option value="4">Rainbow</option>
+      <option value="5">Custom</option>
     </select>
     <div id="custom-pattern" class="secondary-container">
       <h3 style="margin-top: 0;">Custom Pattern Options</h3>

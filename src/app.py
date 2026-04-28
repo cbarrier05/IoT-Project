@@ -62,14 +62,16 @@ def get_custom():
 def data():
     match pattern:
         case 0:
-            pattern_name = "Blink"
+            pattern_name = "None"
         case 1:
-            pattern_name = "Chase"
+            pattern_name = "Blink"
         case 2:
-            pattern_name = "Random"
+            pattern_name = "Chase"
         case 3:
-            pattern_name = "Rainbow"
+            pattern_name = "Random"
         case 4:
+            pattern_name = "Rainbow"
+        case 5:
             pattern_name = "Custom"
         case _:
             pattern_name = "N/A"

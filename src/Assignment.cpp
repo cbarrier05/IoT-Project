@@ -155,14 +155,19 @@ void set_custom_pattern() {
   }
 }
 
+void no_pattern() {
+  int new_state[6] = {0,0,0,0,0,0};
+  set_leds(new_state);
+}
 
 void run_pattern(int pattern) {
   switch (pattern) {
-    case 0: blink_pattern(); break;
-    case 1: chase_pattern(); break;
-    case 2: random_pattern(); break;
-    case 3: rainbow_pattern(); break;
-    case 4: set_custom_pattern(); break;
+    case 0: no_pattern(); break;
+    case 1: blink_pattern(); break;
+    case 2: chase_pattern(); break;
+    case 3: random_pattern(); break;
+    case 4: rainbow_pattern(); break;
+    case 5: set_custom_pattern(); break;
     default: break;
   }
 }
@@ -301,7 +306,7 @@ void loop() {
 
       http.end();
 
-      if ((pattern == 4) && (custom_pattern_updated == 1)) {
+      if ((pattern == 5) && (custom_pattern_updated == 1)) {
         get_custom_pattern();
       }
 

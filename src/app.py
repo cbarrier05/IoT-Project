@@ -3,7 +3,7 @@ from flask import Flask, request, render_template
 app = Flask(__name__)
 
 pattern = 0
-temperature = 0
+temperature = "N/A"
 temp_data = [0.0 for i in range(20)]
 
 custom_frames = []

@@ -9,7 +9,6 @@ Christian Barrier and Jake Sutcliffe
 - Improve Web UI
 - Proper Code Comments and Readability
 - Add Appropriate Instructions To README (How to start server, connect WiFi etc)
-- (Optional) Log sensor data and display as graph
 - (Optional) User Editable boundaries for temperature LEDs
 - (Optional) Responsive Web Design (Mobile Friendly)
 ### For High Marks

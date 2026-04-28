@@ -161,7 +161,7 @@
       setPattern(selectedValue);
     }
 
-    const graphDiv = document.getElementById('temperature-graph');
+
     const layout = {
       title: {
         text: 'Temperature History'
@@ -179,6 +179,8 @@
     }
 
     function updateGraph() {
+      const graphDiv = document.getElementById('temperature-graph');
+
       fetch('/set_graph')
         .then(res => res.json())
         .then(data => {

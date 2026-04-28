@@ -8,7 +8,7 @@
     :root {
       --background-color: rgb(24, 23, 23);
       --container-color: rgb(34, 33, 33);
-      --tertiary-container-color: rgb(41, 38, 38);
+      --secondary-container-color: rgb(41, 38, 38);
       --text-color: rgb(211, 197, 197);
 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,8 +16,14 @@
       color: var(--text-color);
     }
 
+    h1 {
+      font-size: 42px;
+      font-weight: 400;
+    }
+
     .flex-container {
-      width: 90%;
+      width: 95%;
+      padding: 2.5%;
       justify-self: center;
       display: flex;
       flex-direction: row;
@@ -33,7 +39,7 @@
     .content-container {
       background-color: var(--container-color);
       border-radius: 20px;
-      padding: 1%;
+      padding: 1.5%;
     }
 
     h1 {
@@ -48,16 +54,53 @@
       background-color: blue;
     }
 
-    #custom-pattern {
-      display: none;
+    button {
+      background: var(--container-color);
+      color: var(--text-color);
+      border-radius: 6px;
+      font-size: 14px;
+      padding: 3px 10px;
+    }
+
+    .secondary-container {
       padding: 2%;
       margin: 2%;
-      background-color: var(--tertiary-container-color);
+      background-color: var(--secondary-container-color);
       border-radius: 10px;
     }
 
-    #edit_temp_leds {
+    #custom-pattern {
       display: none;
+    }
+
+    #temp-leds > * {
+      margin: 0 0 10px 0;
+    }
+
+    #edit-temp-leds {
+      display: none;
+      flex-direction: column;
+      margin-top: 10px;
+      background-color: var(--secondary-container-color);
+    }
+
+    #edit-temp-leds > * {
+      margin: 0 0 10px 0;
+    }
+
+    #edit-temp-leds > * > label {
+      float: left;
+      min-width: 80px;
+    }
+
+    #edit-temp-leds > * > input {
+      float: left;
+      width: 100px;
+    }
+
+    #edit-temp-leds > button {
+      width: fit-content;
+      margin: 0;
     }
 
     .control-buttons {
@@ -70,11 +113,16 @@
       justify-self: center;
     }
 
-    .led-checkboxes > input[type=checkbox] {
+    input[type="number"] {
+      background-color: var(--background-color);
+      color: var(--text-color);
+      max-width: 45px;
+    }
+
+    input[type="checkbox"] {
       width: 16px;
       height: 16px;
       margin: 2px;
-      background-color: grey;
       cursor: pointer;
     }
 
@@ -101,6 +149,7 @@
       border-radius: 3px;
       background: var(--container-color);
       color: var(--text-color);
+      font-size: 14px;
     }
 
     select > option {
@@ -117,6 +166,10 @@
       .flex-container {
         flex-direction: column;
       }
+      
+      .flex-container > div {
+        width: 97%;
+      }
     }
   </style>
 
@@ -130,6 +183,7 @@
     var customState = [];
     var checkboxes = [];
     var frameDelay = 200;
+    var boundariesShown = false;
 
     function setPattern(p) {
       fetch('/set_pattern/' + p);
@@ -155,9 +209,9 @@
       .then(data => {
         document.getElementById("temperature").innerText = data.temperature;
         document.getElementById("pattern").innerText = data.pattern;
-        document.getElementById("temp_led_low").innerText = data.temp_led_low;
-        document.getElementById("temp_led_med").innerText = data.temp_led_med;
-        document.getElementById("temp_led_high").innerText = data.temp_led_high;
+        document.getElementById("temp-led-low").innerText = data.temp-led-low;
+        document.getElementById("temp-led-med").innerText = data.temp-led-med;
+        document.getElementById("temp-led-high").innerText = data.temp-led-high;
       });
     }
 
@@ -194,7 +248,19 @@
           var tempTrace = {
             x: data.time_history,
             y: data.temp_history,
+            bgcolor: 'rgb(41, 38, 38)',
             mode: 'lines+markers',
+            marker: {
+              color: 'rgb(211, 197, 197)'
+            },
+            line : {
+              color: 'rgb(211, 197, 197)'
+            },
+            font: {
+              family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+              size: 14,
+              color: 'rgb(211, 197, 197)' 
+            }
           }
 
           Plotly.react(graphDiv, [tempTrace], layout);
@@ -240,6 +306,7 @@
       renderLedGrid(); 
     }
 
+    // produces the led checkbox grid
     function renderLedGrid() {
       const grid = document.getElementById('led-grid');
       grid.innerHTML = '';
@@ -290,20 +357,25 @@
     }
 
     function setTempLeds() {
-      const temp_low_value = document.getElementById("edit_low").value.toString()
-      const temp_med_value = document.getElementById("edit_med").value.toString()
-      const temp_high_value = document.getElementById("edit_high").value.toString()
+      const temp_low_value = document.getElementById("edit-low").value.toString()
+      const temp_med_value = document.getElementById("edit-med").value.toString()
+      const temp_high_value = document.getElementById("edit-high").value.toString()
       temp_values = temp_low_value + "," + temp_med_value + "," + temp_high_value
 
-      tempEditBlock = document.getElementById("edit_temp_leds")
-      tempEditBlock.style.display = "none";
+      tempEditBlock = document.getElementById("edit-temp-leds")
+      toggleTempOption();
 
-      fetch('/set_temp_leds/' + temp_values);
+      fetch('/set_temp-leds/' + temp_values);
     }
 
-    function showTempOption() {
-      tempEditBlock = document.getElementById("edit_temp_leds")
-      tempEditBlock.style.display = "block";
+    function toggleTempOption() {
+      boundariesShown = !boundariesShown;
+      tempEditBlock = document.getElementById("edit-temp-leds");
+      if (boundariesShown) {
+        tempEditBlock.style.display = "flex";
+      } else {
+        tempEditBlock.style.display = "none";
+      }
     }
 
     setInterval(() => {
@@ -326,19 +398,18 @@
     <h3>Current Temperature</h3>
     <p><span id="temperature">N/A</span>&#8451</p>
     <div id="temperature-graph"></div>
-    <div id="temp_leds">
+    <div id="temp-leds">
       <h3>Temperature LED Boundaries</h3>
-      <p>Low: <span id="temp_led_low">N/A</span>&#8451</p>
-      <p>Medium: <span id="temp_led_med">N/A</span>&#8451</p>
-      <p>High: <span id="temp_led_high">N/A</span>&#8451</p>
+      <p>Low: <span id="temp-led-low">N/A</span>&#8451</p>
+      <p>Medium: <span id="temp-led-med">N/A</span>&#8451</p>
+      <p>High: <span id="temp-led-high">N/A</span>&#8451</p>
     </div>
-    <button onclick="showTempOption()">Edit Boundaries</button>
-    <div id="edit_temp_leds">
-      <label>Low: <input type="number" id="edit_low" value="0"></label>
-      <label>Med: <input type="number" id="edit_med" value="0"></label>
-      <label>High: <input type="number" id="edit_high" value="0"></label>
-      <br>
-      <button onclick="setTempLeds()">Submit</button>
+    <button onclick="toggleTempOption()">Edit Boundaries</button>
+    <div id="edit-temp-leds" class="secondary-container">
+      <div><label>Low:</label><input type="number" id="edit-low" value="0"><span>℃</span></div>
+      <div><label>Medium:</label><input type="number" id="edit-med" value="0"><span>℃</span></div>
+      <div><label>High:</label><input type="number" id="edit-high" value="0"><span>℃</span></div>
+      <button onclick="setTempLeds()">Apply</button>
     </div>
   </div>
 
@@ -355,10 +426,10 @@
       <option value="3">Rainbow</option>
       <option value="4">Custom</option>
     </select>
-    <div id="custom-pattern">
+    <div id="custom-pattern" class="secondary-container">
       <h3 style="margin-top: 0;">Custom Pattern Options</h3>
       <div style="justify-self: center;"><span id="frame-number">Pattern Data</span></div>
-      <div id="led-grid"></div>
+      <div id="led-grid" class="led-checkboxes"></div>
       <div class="control-buttons">
         <div>
           <label>Pattern Stages:</label>

@@ -10,7 +10,7 @@
 const char* ssid = "Christian's_S23";
 const char* password = "Christian";
 
-const char* server_address = "http://192.168.0.15:5000";
+const char* server_address = "http://192.168.134.40:5000";
 
 #define TEMP_PIN 8
 #define TEMP_LED1_PIN 5
@@ -174,8 +174,7 @@ float readTemperature() {
   return tempC;
 }
 
-void temp_led_pattern() {
-
+void get_temp_led_values() {
   HTTPClient http;
   String url = String(server_address) + "/get_temp_leds";
   http.begin(url);
@@ -190,7 +189,9 @@ void temp_led_pattern() {
     temp_led_boundaries["Med"] = sub_string.substring(0, second_split).toInt();
     temp_led_boundaries["High"] = sub_string.substring(second_split + 1, sub_string.length()).toInt();
   } 
+}
 
+void temp_led_pattern() {
   int new_states[3] = {0,0,0};
   if (temperatureC > temp_led_boundaries["Low"]) {
     new_states[0] = 1;
@@ -254,10 +255,6 @@ void setup() {
   temp_pin_map[3].colour = "red";
   temp_pin_map[3].state = 0;
 
-  temp_led_boundaries["Low"] = 15;
-  temp_led_boundaries["Med"] = 19;
-  temp_led_boundaries["High"] = 21;
-
   // Temperature Sensor Tuning
   analogReadResolution(12);
   analogSetPinAttenuation(TEMP_PIN, ADC_11db);
@@ -292,16 +289,24 @@ void loop() {
       http.begin(url);
 
       int httpResponseCode = http.GET();
+      int temp_leds_updated;
+      int custom_pattern_updated;
 
       if (httpResponseCode > 0) {
         String response = http.getString();
-        pattern = response.toInt();  
+        pattern = response[0] - '0';
+        temp_leds_updated = response[1] - '0';  
+        custom_pattern_updated = response[2] - '0';
       }
 
       http.end();
 
-      if (pattern == 4) {
+      if ((pattern == 4) && (custom_pattern_updated == 1)) {
         get_custom_pattern();
+      }
+
+      if (temp_leds_updated == 1) {
+        get_temp_led_values();
       }
     }
     lastUpdate = millis();

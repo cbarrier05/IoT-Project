@@ -224,6 +224,13 @@
 
 
     const layout = {
+      plot_bgcolor: 'rgb(41, 38, 38)',
+      paper_bgcolor: 'rgb(41, 38, 38)',
+      font: {
+        family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+        size: 14,
+        color: 'rgb(211, 197, 197)' 
+      },
       title: {
         text: 'Temperature History'
       },
@@ -239,6 +246,11 @@
       }
     }
 
+    const config = {
+      displayModeBar: false,
+      responsive: true
+    };
+
     function updateGraph() {
       const graphDiv = document.getElementById('temperature-graph');
 
@@ -248,7 +260,6 @@
           var tempTrace = {
             x: data.time_history,
             y: data.temp_history,
-            bgcolor: 'rgb(41, 38, 38)',
             mode: 'lines+markers',
             marker: {
               color: 'rgb(211, 197, 197)'
@@ -256,14 +267,8 @@
             line : {
               color: 'rgb(211, 197, 197)'
             },
-            font: {
-              family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-              size: 14,
-              color: 'rgb(211, 197, 197)' 
-            }
           }
-
-          Plotly.react(graphDiv, [tempTrace], layout);
+        Plotly.react(graphDiv, [tempTrace], layout, config);
       });
     }
 

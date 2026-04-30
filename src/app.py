@@ -6,7 +6,7 @@ app = Flask(__name__)
 pattern = 0
 temperature = "N/A"
 temp_data = [0.0 for i in range(20)]
-time_data = [0.0 for i in range(20)]
+time_data = [i * 2 for i in range(20)]
 temp_leds = ["15","19","21"]
 updated_temp_leds = 1
 updated_custom_pattern = 0
@@ -106,6 +106,8 @@ def update_graph(t: float):
     now = time()
     duration = now - last_update
     last_update = now
+    for point in time_data:
+        point += duration
     time_data.insert(0, duration)
     time_data.pop()
 

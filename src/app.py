@@ -1,13 +1,16 @@
 from flask import Flask, request, render_template
+from time import time
 
 app = Flask(__name__)
 
 pattern = 0
 temperature = "N/A"
 temp_data = [0.0 for i in range(20)]
+time_data = [0.0 for i in range(20)]
 temp_leds = ["15","19","21"]
 updated_temp_leds = 1
 updated_custom_pattern = 0
+last_update = time()
 
 custom_frames = []
 custom_delay = 200
@@ -82,7 +85,7 @@ def data():
 @app.route('/set_graph')
 def set_graph():
     global temp_data
-    time_data = [i * 2 for i in range(len(temp_data))]
+    global time_data
     return {
         "temp_history": temp_data,
         "time_history": time_data
@@ -90,8 +93,17 @@ def set_graph():
 
 def update_graph(t: float):
     global temp_data
+    global time_data
+    global last_update
+
     temp_data.insert(0, t)
     temp_data.pop()
+
+    now = time()
+    duration = now - last_update
+    last_update = now
+    time_data.insert(0, duration)
+    time_data.pop()
 
 @app.route('/set_temp_leds/<string:temp_values>')
 def set_temp_leds(temp_values):

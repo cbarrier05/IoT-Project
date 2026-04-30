@@ -186,7 +186,7 @@
     var boundariesShown = false;
 
     function setPattern(p) {
-      fetch('/set_pattern/' + p);
+      fetch('/set-pattern/' + p);
 
       customBlock = document.getElementById("custom-pattern")
       if (p == 5) {
@@ -248,7 +248,7 @@
     function updateGraph() {
       const graphDiv = document.getElementById('temperature-graph');
 
-      fetch('/set_graph')
+      fetch('/set-graph')
         .then(res => res.json())
         .then(data => {
           Plotly.update(graphDiv, {
@@ -331,14 +331,14 @@
       frameDelay = parseInt(newDelay);
     }
 
-    // sends a pattern to the flask 'set_custom' data endpoint
+    // sends a pattern to the flask 'set-custom' data endpoint
     function savePattern() {
       const data = {
         frames: customState,
         delay: frameDelay,
       };
 
-      fetch('/set_custom', {
+      fetch('/set-custom', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

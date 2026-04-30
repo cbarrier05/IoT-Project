@@ -33,14 +33,14 @@ def update():
     updated_custom_pattern = 0
     return return_string
 
-@app.route('/set_pattern/<int:p>')
+@app.route('/set-pattern/<int:p>')
 def set_pattern(p):
     global pattern
     pattern = p
     return "OK"
 
 # Saves the custom pattern from the web page
-@app.route('/set_custom', methods=['POST'])
+@app.route('/set-custom', methods=['POST'])
 def set_custom():
     global custom_frames, custom_delay
     data = request.get_json()
@@ -52,7 +52,7 @@ def set_custom():
     return "OK"
 
 # Returns the current position of custom LEDs
-@app.route('/get_custom')
+@app.route('/get-custom')
 def get_custom():
     custom_string = ""
     for frame in custom_frames:
@@ -83,7 +83,7 @@ def data():
             "temp_led_low": temp_leds[0], "temp_led_med": temp_leds[1], 
             "temp_led_high": temp_leds[2]}
 
-@app.route('/set_graph')
+@app.route('/set-graph')
 def set_graph():
     global temp_data
     time_data = [i * 2 for i in range(len(temp_data))]
@@ -107,7 +107,7 @@ def set_temp_leds(temp_values):
     return "OK"
 
 # Returns the current LED temperature boundaries
-@app.route('/get_temp_leds')
+@app.route('/get-temp-leds')
 def get_temp_leds():
     temp_led_string = ",".join(temp_leds)
     return temp_led_string

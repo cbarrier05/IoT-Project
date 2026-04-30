@@ -127,7 +127,7 @@ void rainbowPattern() {
 void getCustomPattern() {
   // Requests the custom LED pattern from the web server
   HTTPClient http;
-  String url = String(server_address) + "/get_custom";
+  String url = String(server_address) + "/get-custom";
   http.begin(url);
   int httpResponseCode = http.GET();
 
@@ -192,7 +192,7 @@ float readTemperature() {
 void getTempLedValues() {
   // Requests the temperature LED boundaries from the web server
   HTTPClient http;
-  String url = String(server_address) + "/get_temp_leds";
+  String url = String(server_address) + "/get-temp-leds";
   http.begin(url);
   int httpResponseCode = http.GET();
 

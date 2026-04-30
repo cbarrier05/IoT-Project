@@ -209,9 +209,9 @@
       .then(data => {
         document.getElementById("temperature").innerText = data.temperature;
         document.getElementById("pattern").innerText = data.pattern;
-        document.getElementById("temp-led-low").innerText = data.temp-led-low;
-        document.getElementById("temp-led-med").innerText = data.temp-led-med;
-        document.getElementById("temp-led-high").innerText = data.temp-led-high;
+        document.getElementById("temp-led-low").innerText = data.temp_led_low;
+        document.getElementById("temp-led-med").innerText = data.temp_led_med;
+        document.getElementById("temp-led-high").innerText = data.temp_led_high;
       });
     }
 
@@ -257,18 +257,10 @@
       fetch('/set_graph')
         .then(res => res.json())
         .then(data => {
-          var tempTrace = {
-            x: data.time_history,
-            y: data.temp_history,
-            mode: 'lines+markers',
-            marker: {
-              color: 'rgb(211, 197, 197)'
-            },
-            line : {
-              color: 'rgb(211, 197, 197)'
-            },
-          }
-        Plotly.react(graphDiv, [tempTrace], layout, config);
+          Plotly.update(graphDiv, {
+            x: [data.time_history],
+            y: [data.temp_history]
+        });
       });
     }
 
@@ -370,7 +362,7 @@
       tempEditBlock = document.getElementById("edit-temp-leds")
       toggleTempOption();
 
-      fetch('/set_temp-leds/' + temp_values);
+      fetch('/set-temp-leds/' + temp_values);
     }
 
     function toggleTempOption() {
@@ -390,6 +382,17 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       populateFrameSelector();
+
+      const graphDiv = document.getElementById('temperature-graph');
+
+      Plotly.newPlot(graphDiv, [{
+        x: [],
+        y: [],
+        mode: 'lines+markers',
+        marker: { color: 'rgb(211, 197, 197)' },
+        line: { color: 'rgb(211, 197, 197)' }
+      }], layout, config);
+
     });
   </script>
 </head>

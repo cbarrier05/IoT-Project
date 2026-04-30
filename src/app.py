@@ -93,7 +93,7 @@ def update_graph(t: float):
     temp_data.insert(0, t)
     temp_data.pop()
 
-@app.route('/set_temp_leds/<string:temp_values>')
+@app.route('/set-temp-leds/<string:temp_values>')
 def set_temp_leds(temp_values):
     global temp_leds
     temp_leds = temp_values.split(',')

@@ -5,9 +5,9 @@ app = Flask(__name__)
 
 pattern = 0
 temperature = "N/A"
-temp_data = [0.0 for i in range(20)]
-time_data = [i * 2 for i in range(20)]
-temp_leds = ["15","19","21"]
+temp_data = []
+time_data = []
+temp_leds = ["15", "19", "21"]
 updated_temp_leds = 1
 updated_custom_pattern = 0
 last_update = time()
@@ -101,7 +101,7 @@ def update_graph(t: float):
     global last_update
 
     temp_data.insert(0, t)
-    temp_data.pop()
+    temp_data = temp_data[0:20]
 
     now = time()
     duration = now - last_update
@@ -109,7 +109,7 @@ def update_graph(t: float):
     for i in range(len(time_data)):
         time_data[i] += duration
     time_data.insert(0, duration)
-    time_data.pop()
+    time_data = time_data[0:20]
 
 # Receives LED temperature boundaries set by the user
 @app.route('/set-temp-leds/<string:temp_values>')

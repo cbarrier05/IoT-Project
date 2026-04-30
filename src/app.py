@@ -16,11 +16,14 @@ custom_delay = 200
 def index():
     return render_template('index.html')
 
+# Receives temperature data from the ESP32
+# Returns the current pattern and if the temperature LED boundaries or custom pattern has changed
 @app.route('/update')
 def update():
     global temperature
     temp = request.args.get('temp')
     if temp:
+        # Updates graph with new data
         update_graph(float(temp))
         temperature = temp
     global updated_temp_leds
@@ -36,6 +39,7 @@ def set_pattern(p):
     pattern = p
     return "OK"
 
+# Saves the custom pattern from the web page
 @app.route('/set_custom', methods=['POST'])
 def set_custom():
     global custom_frames, custom_delay
@@ -93,6 +97,7 @@ def update_graph(t: float):
     temp_data.insert(0, t)
     temp_data.pop()
 
+# Receives LED temperature boundaries set by the user
 @app.route('/set-temp-leds/<string:temp_values>')
 def set_temp_leds(temp_values):
     global temp_leds
@@ -101,6 +106,7 @@ def set_temp_leds(temp_values):
     updated_temp_leds = 1
     return "OK"
 
+# Returns the current LED temperature boundaries
 @app.route('/get_temp_leds')
 def get_temp_leds():
     temp_led_string = ",".join(temp_leds)

@@ -19,11 +19,14 @@ custom_delay = 200
 def index():
     return render_template('index.html')
 
+# Receives temperature data from the ESP32
+# Returns the current pattern and if the temperature LED boundaries or custom pattern has changed
 @app.route('/update')
 def update():
     global temperature
     temp = request.args.get('temp')
     if temp:
+        # Updates graph with new data
         update_graph(float(temp))
         temperature = temp
     global updated_temp_leds
@@ -33,13 +36,14 @@ def update():
     updated_custom_pattern = 0
     return return_string
 
-@app.route('/set_pattern/<int:p>')
+@app.route('/set-pattern/<int:p>')
 def set_pattern(p):
     global pattern
     pattern = p
     return "OK"
 
-@app.route('/set_custom', methods=['POST'])
+# Saves the custom pattern from the web page
+@app.route('/set-custom', methods=['POST'])
 def set_custom():
     global custom_frames, custom_delay
     data = request.get_json()
@@ -51,7 +55,7 @@ def set_custom():
     return "OK"
 
 # Returns the current position of custom LEDs
-@app.route('/get_custom')
+@app.route('/get-custom')
 def get_custom():
     custom_string = ""
     for frame in custom_frames:
@@ -82,7 +86,7 @@ def data():
             "temp_led_low": temp_leds[0], "temp_led_med": temp_leds[1], 
             "temp_led_high": temp_leds[2]}
 
-@app.route('/set_graph')
+@app.route('/set-graph')
 def set_graph():
     global temp_data
     global time_data
@@ -105,7 +109,8 @@ def update_graph(t: float):
     time_data.insert(0, duration)
     time_data.pop()
 
-@app.route('/set_temp_leds/<string:temp_values>')
+# Receives LED temperature boundaries set by the user
+@app.route('/set-temp-leds/<string:temp_values>')
 def set_temp_leds(temp_values):
     global temp_leds
     temp_leds = temp_values.split(',')
@@ -113,7 +118,8 @@ def set_temp_leds(temp_values):
     updated_temp_leds = 1
     return "OK"
 
-@app.route('/get_temp_leds')
+# Returns the current LED temperature boundaries
+@app.route('/get-temp-leds')
 def get_temp_leds():
     temp_led_string = ",".join(temp_leds)
     return temp_led_string

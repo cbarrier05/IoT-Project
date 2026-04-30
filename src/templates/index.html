@@ -186,7 +186,7 @@
     var boundariesShown = false;
 
     function setPattern(p) {
-      fetch('/set_pattern/' + p);
+      fetch('/set-pattern/' + p);
 
       customBlock = document.getElementById("custom-pattern")
       if (p == 5) {
@@ -197,21 +197,15 @@
 
     }
 
-    function setCustom(c, btn) {
-      fetch('/set_custom/' + c)
-
-      btn.classList.toggle("active");
-    }
-
     function refreshData() {
       fetch('/data')
       .then(res => res.json())
       .then(data => {
         document.getElementById("temperature").innerText = data.temperature;
         document.getElementById("pattern").innerText = data.pattern;
-        document.getElementById("temp-led-low").innerText = data.temp-led-low;
-        document.getElementById("temp-led-med").innerText = data.temp-led-med;
-        document.getElementById("temp-led-high").innerText = data.temp-led-high;
+        document.getElementById("temp-led-low").innerText = data.temp_led_low;
+        document.getElementById("temp-led-med").innerText = data.temp_led_med;
+        document.getElementById("temp-led-high").innerText = data.temp_led_high;
       });
     }
 
@@ -254,21 +248,13 @@
     function updateGraph() {
       const graphDiv = document.getElementById('temperature-graph');
 
-      fetch('/set_graph')
+      fetch('/set-graph')
         .then(res => res.json())
         .then(data => {
-          var tempTrace = {
-            x: data.time_history,
-            y: data.temp_history,
-            mode: 'lines+markers',
-            marker: {
-              color: 'rgb(211, 197, 197)'
-            },
-            line : {
-              color: 'rgb(211, 197, 197)'
-            },
-          }
-        Plotly.react(graphDiv, [tempTrace], layout, config);
+          Plotly.update(graphDiv, {
+            x: [data.time_history],
+            y: [data.temp_history]
+        });
       });
     }
 
@@ -345,14 +331,14 @@
       frameDelay = parseInt(newDelay);
     }
 
-    // sends a pattern to the flask 'set_custom' data endpoint
+    // sends a pattern to the flask 'set-custom' data endpoint
     function savePattern() {
       const data = {
         frames: customState,
         delay: frameDelay,
       };
 
-      fetch('/set_custom', {
+      fetch('/set-custom', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -370,7 +356,7 @@
       tempEditBlock = document.getElementById("edit-temp-leds")
       toggleTempOption();
 
-      fetch('/set_temp-leds/' + temp_values);
+      fetch('/set-temp-leds/' + temp_values);
     }
 
     function toggleTempOption() {
@@ -390,6 +376,17 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       populateFrameSelector();
+
+      const graphDiv = document.getElementById('temperature-graph');
+
+      Plotly.newPlot(graphDiv, [{
+        x: [],
+        y: [],
+        mode: 'lines+markers',
+        marker: { color: 'rgb(211, 197, 197)' },
+        line: { color: 'rgb(211, 197, 197)' }
+      }], layout, config);
+
     });
   </script>
 </head>

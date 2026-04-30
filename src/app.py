@@ -106,8 +106,8 @@ def update_graph(t: float):
     now = time()
     duration = now - last_update
     last_update = now
-    for point in time_data:
-        point += duration
+    for i in range(len(time_data)):
+        time_data[i] += duration
     time_data.insert(0, duration)
     time_data.pop()
 

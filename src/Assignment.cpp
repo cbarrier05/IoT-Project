@@ -55,7 +55,7 @@ std::map<String, int> temp_led_boundaries;
 const int update_period = 2000;
 
 // Sets the LEDs to match the function argument
-void set_leds(int new_states[6]) {
+void setLeds(int new_states[6]) {
   for (int i = 0; i < 6; i++) {
     PinInfo current_pin = led_pin_map[i+1];
     // Only updates changed LEDs
@@ -68,7 +68,7 @@ void set_leds(int new_states[6]) {
 }
 
 // Sets the temperature LEDs to match the function argument
-void set_temp_leds(int new_states[3]) {
+void setTempLeds(int new_states[3]) {
   for (int i = 0; i < 3; i++) {
     PinInfo current_pin = temp_pin_map[i+1];
     // Only updates changed LEDs
@@ -80,25 +80,25 @@ void set_temp_leds(int new_states[3]) {
   }
 }
 
-void blink_pattern() {
+void blinkPattern() {
   int first_state[6] = {1,1,1,1,1,1};
-  set_leds(first_state);
+  setLeds(first_state);
   delay(300);
   int second_state[6] = {0,0,0,0,0,0};
-  set_leds(second_state);
+  setLeds(second_state);
   delay(300);
 }
 
-void chase_pattern() {
+void chasePattern() {
   for (int i = 0; i < 6; i++) {
       int new_state[6] = {0,0,0,0,0,0};
       new_state[i] = 1;
-      set_leds(new_state);
+      setLeds(new_state);
       delay(100);
   }
 }
 
-void random_pattern() {
+void randomPattern() {
   int new_state[6] = {0,0,0,0,0,0};
   // For each LED, random chance of being on or off
   for (int i = 0; i < 6; i++) {
@@ -106,11 +106,11 @@ void random_pattern() {
       new_state[i] = 1;
     }
   }
-  set_leds(new_state);
+  setLeds(new_state);
   delay(300);
 }
 
-void rainbow_pattern() {
+void rainbowPattern() {
   String colours[] = {"green", "yellow", "red"};
   for (String colour : colours) {
     int new_state[6] = {0,0,0,0,0,0};
@@ -119,12 +119,12 @@ void rainbow_pattern() {
         new_state[i] = 1;
       }
     }
-    set_leds(new_state);
+    setLeds(new_state);
     delay(300);
   }
 }
 
-void get_custom_pattern() {
+void getCustomPattern() {
   // Requests the custom LED pattern from the web server
   HTTPClient http;
   String url = String(server_address) + "/get_custom";
@@ -149,7 +149,7 @@ void get_custom_pattern() {
   http.end();
 }
 
-void set_custom_pattern() {
+void setCustomPattern() {
   if (custom_frame_count == 0) return;
   // Splits the custom pattern data into separate frames
   for (int frame = 0; frame < custom_frame_count; frame++) {
@@ -159,24 +159,24 @@ void set_custom_pattern() {
        new_states[i] = 1;
       }
     }
-    set_leds(new_states);
+    setLeds(new_states);
     delay(custom_frame_delay);
   }
 }
 
-void no_pattern() {
+void noPattern() {
   int new_state[6] = {0,0,0,0,0,0};
-  set_leds(new_state);
+  setLeds(new_state);
 }
 
-void run_pattern(int pattern) {
+void runPattern(int pattern) {
   switch (pattern) {
-    case 0: no_pattern(); break;
-    case 1: blink_pattern(); break;
-    case 2: chase_pattern(); break;
-    case 3: random_pattern(); break;
-    case 4: rainbow_pattern(); break;
-    case 5: set_custom_pattern(); break;
+    case 0: noPattern(); break;
+    case 1: blinkPattern(); break;
+    case 2: chasePattern(); break;
+    case 3: randomPattern(); break;
+    case 4: rainbowPattern(); break;
+    case 5: setCustomPattern(); break;
     default: break;
   }
 }
@@ -189,7 +189,7 @@ float readTemperature() {
   return tempC;
 }
 
-void get_temp_led_values() {
+void getTempLedValues() {
   // Requests the temperature LED boundaries from the web server
   HTTPClient http;
   String url = String(server_address) + "/get_temp_leds";
@@ -208,7 +208,7 @@ void get_temp_led_values() {
   } 
 }
 
-void temp_led_pattern() {
+void tempLedPattern() {
   // Treats the temperature LEDs as visual thermometer
   // Temperature boundaries set which LEDs are on/off
   int new_states[3] = {0,0,0};
@@ -222,7 +222,7 @@ void temp_led_pattern() {
     new_states[2] = 1;
   }
 
-  set_temp_leds(new_states);
+  setTempLeds(new_states);
 }
 
 void setup() {
@@ -325,17 +325,17 @@ void loop() {
       // Only requests the custom pattern and temperature boundary values if they have changed and are needed
       // Reduces unnecessary server requests 
       if ((pattern == 5) && (custom_pattern_updated == 1)) {
-        get_custom_pattern();
+        getCustomPattern();
       }
       if (temp_leds_updated == 1) {
-        get_temp_led_values();
+        getTempLedValues();
       }
     }
     lastUpdate = millis();
   }
 
   // Refreshes the LED patterns 
-  run_pattern(pattern);
-  temp_led_pattern();
+  runPattern(pattern);
+  tempLedPattern();
 }
 
